@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VEvents.Configs;
 using VEvents.Core.Interfaces;
 using VEvents.Events;
 
@@ -6,19 +7,30 @@ namespace VEvents.Core;
 
 public class VEventManager
 {
-	private List<EventBase> _events = [];
+	private List<IEvent> _events = [];
 	public VEventManager()
 	{
 		AddEvent(new TestEvent());
+		AddEvent(new ZombieSurvivalEvent());
+
+		LoadEventConfigs();
 	}
 
 	public void StartEvent(string name)
 	{
-		EventBase ev = _events.Find(e => e.Name == name);
+		IEvent ev = _events.Find(e => e.Name == name);
 		ev?.Start();
 	}
 
-	private void AddEvent(EventBase ev)
+	public void LoadEventConfigs()
+	{
+		foreach (IEvent ev in _events)
+		{
+			ev.LoadConfig();
+		}
+	}
+
+	private void AddEvent(IEvent ev)
 	{
 		// TODO: Check if event is turned off in config
 		_events.Add(ev);

@@ -64,7 +64,10 @@
         <Compile Include="Commands\ListEvents.cs" />
         <Compile Include="Commands\StartEvent.cs" />
         <Compile Include="Commands\StopEvent.cs" />
+        <Compile Include="Configs\EventConfig.cs" />
+        <Compile Include="Configs\PluginConfig.cs" />
         <Compile Include="Core\EventBase.cs" />
+        <Compile Include="Core\Interfaces\IEventConfig.cs" />
         <Compile Include="Core\VEventManager.cs" />
         <Compile Include="Core\Interfaces\IEvent.cs" />
         <Compile Include="Events\TestEvent.cs" />

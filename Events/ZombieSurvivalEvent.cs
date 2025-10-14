@@ -1,11 +1,16 @@
 ﻿using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
+using VEvents.Configs;
 using VEvents.Core;
 using VEvents.Core.Interfaces;
 
 namespace VEvents.Events;
 
-public class ZombieSurvivalEvent : EventBase
+public class ZombieSurvivalConfig : EventConfig
+{
+	public float HiderSeekerRatio { get; set; } = 0.1667f; // 1/6th of players are seekers
+}
+public class ZombieSurvivalEvent : EventBase<ZombieSurvivalConfig>
 {
 	public override string Name { get; } = "Zombie Survival";
 	public override string Description { get; } = "Event turns off the lights and makes 2 teams, hiders and seekers. The seekers are zombies that spread the infection. Last hider standing at the end of the event wins.";

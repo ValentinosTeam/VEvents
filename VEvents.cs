@@ -1,23 +1,37 @@
 ﻿using System;
 using LabApi.Features;
+using LabApi.Features.Console;
+using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
+using VEvents.Configs;
 using VEvents.Core;
 
 namespace VEvents;
 
-public class VEvents : Plugin
+public class VEvents : Plugin<PluginConfig>
 {
 	public static VEvents Instance { get; private set; }
-	public static VEventManager EventManager { get; private set; } = new VEventManager();
+	public static VEventManager EventManager { get; private set; }
+	public static PluginConfig Config { get; private set; }
 
 	public override void Enable()
 	{
 		Instance = this;
+		EventManager = new VEventManager();
 	}
 
 	public override void Disable()
 	{
+		EventManager = null;
 		Instance = null;
+	}
+
+	public override void LoadConfigs()
+	{
+		if (!this.TryLoadConfig("config.yml", out PluginConfig Config)) {
+			Logger.Error("Failed to load config. Using default.");
+			Config = new();
+		}
 	}
 
 	public override string Name { get; } = "VEvents";
