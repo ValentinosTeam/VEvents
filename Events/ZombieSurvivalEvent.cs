@@ -1,5 +1,8 @@
-﻿using LabApi.Features.Console;
+﻿using System.Collections.Generic;
+using Interactables.Interobjects.DoorUtils;
+using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
+using MEC;
 using VEvents.Configs;
 using VEvents.Core;
 using VEvents.Core.Interfaces;
@@ -16,8 +19,10 @@ public class ZombieSurvivalEvent : EventBase<ZombieSurvivalConfig>
 	public override string Description { get; } = "Event turns off the lights and makes 2 teams, hiders and seekers. The seekers are zombies that spread the infection. Last hider standing at the end of the event wins.";
 	protected override void OnStart()
 	{
-		// Wait until the round is started
+		Logger.Debug("Starting event...");
+		Timing.RunCoroutine(WaitForRoundStart());
 		// Make sure no other event is running
+		// Wait until the round is started
 		// Lock round from ending
 		// Start a timer for the event duration
 		// Repair, close and lock all doors
@@ -42,8 +47,38 @@ public class ZombieSurvivalEvent : EventBase<ZombieSurvivalConfig>
 		// Teleport the winners to the tower for a party.
 		// Restart the round after 30 seconds and end the event.
 	}
-
 	protected override void OnStop()
 	{
 	}
+
+	public override bool CanStartManually()
+	{
+		Logger.Debug("Checking if event can be started manually...");
+		//TODO: Make sure no other event is running.
+		if (Round.IsRoundEnded) return false;
+
+		return true;
+	}
+
+	private IEnumerator<float> WaitForRoundStart()
+	{
+		// Wait until the round is started
+		yield return Timing.WaitUntilTrue(() => Round.IsRoundStarted);
+		Logger.Debug("Round started, starting event...");
+		PrepareRound();
+	}
+
+	private void PrepareRound()
+	{
+		// Repair, close and lock all doors
+		Logger.Debug("Preparing round: repairing, closing and locking all doors...");
+		foreach (Door door in Door.List)
+		{
+			if (door is BreakableDoor breakableDoor) breakableDoor.TryRepair();
+			door.IsOpened = false;
+			door.IsLocked = true; // NOTE: Visual bug if a broken door got fixed and locked, the button doesn't show the locked state. Still works though.
+		}
+		Logger.Debug("All doors repaired, closed and locked.");
+	}
+
 }

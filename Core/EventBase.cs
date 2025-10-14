@@ -55,9 +55,22 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 		if (!Regex.IsMatch(Name, "^[a-zA-Z_]+$")) throw new InvalidOperationException($"Invalid event name: {Name}");
 	}
 
-	public TConfig Settings { get; private set; } = new();
+	/// <summary>
+	/// Override to add custom start conditions.
+	/// </summary>
+	/// <returns> Returns true if the event has met its conditions to start, false otherwise. </returns>
+	public virtual bool CanStartManually()
+	{
+		return false;
+	}
+	public virtual bool CanStartAutomatically()
+	{
+		return false;
+	}
+
+	protected TConfig Settings { get; private set; } = new();
 	public EventConfig Config => Settings;
-	public virtual void LoadConfig()
+	public void LoadConfig()
 	{
 		string fileName = $"event-{Name}-config.yml";
 		if (!VEvents.Instance.TryReadConfig(fileName, out TConfig cfg)) // Not using TryLoadConfig to reliably create a new config if it doesn't exist

@@ -19,12 +19,22 @@ public class VEventManager
 		LoadEventConfigs();
 	}
 
-	public bool StartEvent(string name)
+	public bool StartEvent(string name, bool manual)
 	{
 		IEvent ev = Events.Find(e => e.Name == name);
 		if (ev == null) return false;
+		if (manual && !ev.CanStartManually()) return false;
+		if (!manual && !ev.CanStartAutomatically()) return false;
 		ev.Start();
 		return true;
+	}
+
+	public List<string> GetRunningEventNames()
+	{
+		return Events
+			.Where(e => e.IsRunning)
+			.Select(e => e.Name)
+			.ToList();
 	}
 
 	private void LoadEventConfigs()

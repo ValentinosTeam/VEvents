@@ -15,7 +15,7 @@ public class StartEvent : ICommand
 			return false;
 		}
 		string eventName = arguments.At(0);
-		bool success = VEvents.Instance.EventManager.StartEvent(eventName);
+		bool success = VEvents.Instance.EventManager.StartEvent(eventName, true);
 		response = success ? $"Event '{eventName}' started successfully." : $"Event '{eventName}' not found or could not be started.";
 		return success;
 	}
