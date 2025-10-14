@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using LabApi.Features.Console;
 using VEvents.Configs;
 using VEvents.Core.Interfaces;
 using VEvents.Events;
@@ -7,7 +10,7 @@ namespace VEvents.Core;
 
 public class VEventManager
 {
-	private List<IEvent> _events = [];
+	public List<IEvent> Events { get; private set; } = [];
 	public VEventManager()
 	{
 		AddEvent(new TestEvent());
@@ -16,23 +19,32 @@ public class VEventManager
 		LoadEventConfigs();
 	}
 
-	public void StartEvent(string name)
+	public bool StartEvent(string name)
 	{
-		IEvent ev = _events.Find(e => e.Name == name);
-		ev?.Start();
+		IEvent ev = Events.Find(e => e.Name == name);
+		if (ev == null) return false;
+		ev.Start();
+		return true;
 	}
 
-	public void LoadEventConfigs()
+	private void LoadEventConfigs()
 	{
-		foreach (IEvent ev in _events)
+		foreach (IEvent ev in Events)
 		{
 			ev.LoadConfig();
 		}
 	}
-
 	private void AddEvent(IEvent ev)
 	{
-		// TODO: Check if event is turned off in config
-		_events.Add(ev);
+		try
+		{
+			ev.Validate();
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed to validate event {ev.Name}: {ex}");
+			return;
+		}
+		Events.Add(ev);
 	}
 }

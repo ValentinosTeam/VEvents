@@ -4,13 +4,20 @@ using LabApi.Features.Console;
 
 namespace VEvents.Commands;
 
+[CommandHandler(typeof(RemoteAdminCommandHandler))]
 public class StartEvent : ICommand
 {
 	public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
 	{
-		Logger.Info(arguments);
-		response = "";
-		return false;
+		if (arguments.Count != 1)
+		{
+			response = "Usage: vstart <event_name>";
+			return false;
+		}
+		string eventName = arguments.At(0);
+		bool success = VEvents.Instance.EventManager.StartEvent(eventName);
+		response = success ? $"Event '{eventName}' started successfully." : $"Event '{eventName}' not found or could not be started.";
+		return success;
 	}
 
 	public string Command { get; } = "vstart";

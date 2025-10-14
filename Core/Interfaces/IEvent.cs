@@ -10,4 +10,5 @@ public interface IEvent
 	public void Start();
 	public void Stop();
 	public void LoadConfig();
+	public void Validate();
 }

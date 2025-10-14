@@ -12,7 +12,7 @@ public class ZombieSurvivalConfig : EventConfig
 }
 public class ZombieSurvivalEvent : EventBase<ZombieSurvivalConfig>
 {
-	public override string Name { get; } = "Zombie Survival";
+	public override string Name { get; } = "ZombieSurvival";
 	public override string Description { get; } = "Event turns off the lights and makes 2 teams, hiders and seekers. The seekers are zombies that spread the infection. Last hider standing at the end of the event wins.";
 	protected override void OnStart()
 	{

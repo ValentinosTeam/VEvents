@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using LabApi.Features.Console;
 using LabApi.Loader;
 using VEvents.Configs;
@@ -49,25 +50,16 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 		}
 		OnStop();
 	}
+	public void Validate()
+	{
+		if (!Regex.IsMatch(Name, "^[a-zA-Z_]+$")) throw new InvalidOperationException($"Invalid event name: {Name}");
+	}
 
 	public TConfig Settings { get; private set; } = new();
 	public EventConfig Config => Settings;
-
-	public void OldLoadConfig()
-	{
-		if (!VEvents.Instance.TryLoadConfig($"{Name}.yml", out TConfig loaded))
-		{
-			Logger.Error($"Failed to load {Name}.yml, using defaults.");
-			loaded = new TConfig();
-		}
-
-		loaded.Initialize();
-		Settings = loaded;
-	}
-
 	public virtual void LoadConfig()
 	{
-		string fileName = $"event-{Name.ToLower().Replace(" ", "-")}.yml";
+		string fileName = $"event-{Name}-config.yml";
 		if (!VEvents.Instance.TryReadConfig(fileName, out TConfig cfg)) // Not using TryLoadConfig to reliably create a new config if it doesn't exist
 		{
 			Logger.Debug($"[{Name}] Config not found. Creating new one with defaults.");
@@ -78,7 +70,6 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 		}
 		Settings = cfg;
 	}
-
 
 	protected abstract void OnStart();
 	protected abstract void OnStop();

@@ -16,7 +16,7 @@ public class TestEventConfig : EventConfig
 }
 public class TestEvent : EventBase<TestEventConfig>
 {
-	public override string Name { get; } = "Test Event";
+	public override string Name { get; } = "TestEvent";
 	public override string Description { get; } = "This is a test event for testing purposes.";
 
 	protected override void OnStart()

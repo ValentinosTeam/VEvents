@@ -11,8 +11,8 @@ namespace VEvents;
 public class VEvents : Plugin<PluginConfig>
 {
 	public static VEvents Instance { get; private set; }
-	public static VEventManager EventManager { get; private set; }
-	public static PluginConfig Config { get; private set; }
+	public PluginConfig Config { get; private set; }
+	public VEventManager EventManager { get; private set; }
 
 	public override void Enable()
 	{

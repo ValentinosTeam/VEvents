@@ -1,14 +1,23 @@
 ﻿using System;
+using System.Text;
 using CommandSystem;
+using LabApi.Events;
+using VEvents.Core;
+using VEvents.Core.Interfaces;
 
 namespace VEvents.Commands;
 
+[CommandHandler(typeof(RemoteAdminCommandHandler))]
 public class ListEvents : ICommand
 {
 	public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
 	{
-		response = "";
-		return false;
+		VEventManager eventManager = VEvents.Instance.EventManager;
+		var sb = new StringBuilder();
+		sb.AppendLine();
+		foreach (IEvent ev in eventManager.Events) sb.AppendLine($"- {ev.Name}: {ev.Description}");
+		response = sb.ToString();
+		return true;
 	}
 
 	public string Command { get; } = "vlist";
