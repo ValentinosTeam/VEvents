@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using LabApi.Features.Console;
-using VEvents.Configs;
 using VEvents.Core.Interfaces;
 using VEvents.Events;
+using VEvents.Events.ZombieSurvival;
 
 namespace VEvents.Core;
 

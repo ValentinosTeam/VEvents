@@ -70,8 +70,14 @@
         <Compile Include="Core\VEventManager.cs" />
         <Compile Include="Core\Interfaces\IEvent.cs" />
         <Compile Include="Events\TestEvent.cs" />
-        <Compile Include="Events\ZombieSurvivalEvent.cs" />
-        <Compile Include="Helpers\RoundController.cs" />
+        <Compile Include="Events\ZombieSurvival\ZombieEventState.cs" />
+        <Compile Include="Events\ZombieSurvival\ZombieSurvivalConfig.cs" />
+        <Compile Include="Events\ZombieSurvival\ZombieSurvivalEvent.cs" />
+        <Compile Include="Events\ZombieSurvival\ZombieSurvivalListener.cs" />
+        <Compile Include="Helpers\CooldownUtils.cs" />
+        <Compile Include="Helpers\MapUtils.cs" />
+        <Compile Include="Helpers\PlayerUtils.cs" />
+        <Compile Include="Helpers\RoundUtils.cs" />
         <Compile Include="VEvents.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
