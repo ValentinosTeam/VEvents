@@ -8,4 +8,8 @@ public class RoundUtils
 	{
 		Round.IsLocked = true;
 	}
+	public static void UnlockRound()
+	{
+		Round.IsLocked = false;
+	}
 }

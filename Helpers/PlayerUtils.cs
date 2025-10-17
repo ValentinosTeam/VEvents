@@ -9,11 +9,13 @@ namespace VEvents.Helpers;
 
 public class PlayerUtils
 {
-	public static void PlayersToSpectators()
+	public static void PlayersToSpectators(List<Player> exceptions = null)
 	{
 		foreach (Player p in Player.List)
 		{
 			if (p.Role == RoleTypeId.Overwatch) continue;
+			if (p.IsHost) continue;
+			if (exceptions != null && exceptions.Contains(p)) continue;
 			p.SetRole(RoleTypeId.Spectator, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.AssignInventory | RoleSpawnFlags.UseSpawnpoint);
 		}
 	}

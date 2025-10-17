@@ -48,7 +48,6 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 		{
 			Logger.Error($"Failed to stop {Name}: {ex}");
 		}
-		OnStop();
 	}
 	public void Validate()
 	{

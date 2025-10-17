@@ -1,10 +1,12 @@
 ﻿using System;
+using LabApi.Events.CustomHandlers;
 using LabApi.Features;
 using LabApi.Features.Console;
 using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
 using VEvents.Configs;
 using VEvents.Core;
+using VEvents.Events.ZombieSurvival;
 
 namespace VEvents;
 
@@ -28,9 +30,10 @@ public class VEvents : Plugin<PluginConfig>
 
 	public override void LoadConfigs()
 	{
-		if (!this.TryLoadConfig("config.yml", out PluginConfig Config)) {
+		if (!this.TryLoadConfig("config.yml", out PluginConfig Config))
+		{
 			Logger.Error("Failed to load config. Using default.");
-			Config = new();
+			Config = new PluginConfig();
 		}
 	}
 

@@ -14,7 +14,7 @@ public class VEventManager
 	public VEventManager()
 	{
 		AddEvent(new TestEvent());
-		AddEvent(new ZombieSurvivalEvent());
+		AddEvent(new Event());
 
 		LoadEventConfigs();
 	}
