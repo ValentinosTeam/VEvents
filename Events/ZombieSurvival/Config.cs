@@ -38,12 +38,12 @@ public class Config : Configs.EventConfig
 	public int GuideMessageInterval { get; set; } = 10;
 
 	[Description("The delay in seconds before zombies are released to hunt survivors. Starts after guide messages have been shown.")]
-	public int ZombieReleaseDelay { get; set; } = 30; // 120 = 2 minutes. Time before zombies are released
+	public int ZombieReleaseDelay { get; set; } = 120; // 120 = 2 minutes. Time before zombies are released
 	[Description("Message shown to all players indicating how much time is left until zombies are released. {0} is replaced with the time in seconds.")]
 	public string TimeUntilZombiesReleasedMessage { get; set; } = "Zombies will be released in {0} seconds!";
 
 	[Description("The duration in seconds of how much time zombies have to find and convert all survivors before the event ends.")]
-	public int EventDuration { get; set; } = 60; // 900 s is 15 minutes
+	public int EventDuration { get; set; } = 900; // 900 s is 15 minutes
 	[Description("Message shown to all players indicating how much time is left until the event ends. {0} is replaced with the time in seconds.")]
 	public string TimeUntilEventEndsMessage { get; set; } = "Event ends in {0} seconds!";
 
@@ -62,4 +62,17 @@ public class Config : Configs.EventConfig
 		new() { { ItemType.Ammo9x19, 3 } },
 		new() { { ItemType.Medkit, 1 } }
 	];
+
+	[Description("Sub events that can occur during the event to add more chaos. Interval is random between min and max.")]
+	public float SubEventMinInterval { get; set; } = 30f;
+	public float SubEventMaxInterval { get; set; } = 90f;
+
+	[Description("Weights determine the chance of each event occurring.")]
+	public Dictionary<SubEvent, int> SubEventWeights { get; set; } = new()
+	{
+		{SubEvent.None, 10},
+		{SubEvent.Cassie, 5},
+		{SubEvent.Flicker, 4},
+		{SubEvent.Amnesia, 3}
+	};
 }

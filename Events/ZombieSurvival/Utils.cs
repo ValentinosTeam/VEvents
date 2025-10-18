@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CustomPlayerEffects;
 using InventorySystem;
 using InventorySystem.Items;
 using LabApi.Features.Wrappers;
@@ -28,20 +29,30 @@ internal class Utils
 		Settings = settings;
 	}
 
-	internal void SpawnAsZombie(Player player)
+	internal void SpawnAsZombie(Player player, bool useZombieSpawn = true)
 	{
 		if (Survivors.Contains(player)) Survivors.Remove(player);
 		if (!Zombies.Contains(player)) Zombies.Add(player);
 		player.SetRole(RoleTypeId.Scp0492, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
 		Logger.Debug($"{player.Nickname} is now a zombie");
 		GenerateZombieLoot(player);
-		player.Position = ZombieSpawn;
+		if (useZombieSpawn) player.Position = ZombieSpawn;
+		else
+		{
+			player.EnableEffect<Flashed>(1, 5f);
+			player.EnableEffect<Deafened>(50, 10f);
+			player.EnableEffect<Blurred>(25, 25f);
+			player.EnableEffect<Blindness>(50, 25f);
+			player.EnableEffect<AmnesiaVision>(1, 25f);
+			player.EnableEffect<Slowness>(80, 25f);
+		}
+
 	}
 
 	private void GenerateZombieLoot(Player player)
 	{
-		if (Settings.ZombieDrops == null || Settings.ZombieDrops.Count == 0)
-			return;
+		if (Settings.ZombieDrops == null || Settings.ZombieDrops.Count == 0) return;
+
 		int randomIndex = UnityEngine.Random.Range(0, Settings.ZombieDrops.Count);
 		KeyValuePair<ItemType, int> randomEntry = Settings.ZombieDrops[randomIndex].First();
 		try

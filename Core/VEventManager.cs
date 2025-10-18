@@ -19,22 +19,57 @@ public class VEventManager
 		LoadEventConfigs();
 	}
 
-	public bool StartEvent(string name, bool manual)
+	public bool StartEvent(string name, out string response, bool manual = false)
 	{
+		response = null;
 		IEvent ev = Events.Find(e => e.Name == name);
-		if (ev == null) return false;
-		if (manual && !ev.CanStartManually()) return false;
-		if (!manual && !ev.CanStartAutomatically()) return false;
+		if (ev == null)
+		{
+			response = "Event not found.";
+			return false;
+		}
+		if (manual && !ev.CanStartManually())
+		{
+			response = "This event cannot be started manually.";
+			return false;
+		}
+		if (!manual && !ev.CanStartAutomatically())
+		{
+			response = "This event cannot be started automatically.";
+			return false;
+		}
+		if (ev.IsRunning)
+		{
+			response = "Event is already running.";
+			return false;
+		}
 		ev.Start();
 		return true;
 	}
 
-	public List<string> GetRunningEventNames()
+	public void StopAllEvents()
 	{
-		return Events
-			.Where(e => e.IsRunning)
-			.Select(e => e.Name)
-			.ToList();
+		Logger.Debug("Stopping all events...");
+		foreach (IEvent ev in Events.Where(ev => ev.IsRunning)) ev.Stop();
+	}
+
+	public bool StopEvent(string name, out string response)
+	{
+		IEvent ev = Events.Find(e => e.Name == name);
+		if (ev == null)
+		{
+			response = "Event not found.";
+			return false;
+		}
+		if (!ev.IsRunning)
+		{
+			response = "Event is not running.";
+			return false;
+		}
+
+		ev.Stop();
+		response = null;
+		return true;
 	}
 
 	private void LoadEventConfigs()

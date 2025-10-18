@@ -13,17 +13,25 @@ namespace VEvents;
 public class VEvents : Plugin<PluginConfig>
 {
 	public static VEvents Instance { get; private set; }
-	public PluginConfig Config { get; private set; }
+	public new PluginConfig Config { get; private set; }
 	public VEventManager EventManager { get; private set; }
+	private VEventListener EventListener { get; set; }
 
 	public override void Enable()
 	{
 		Instance = this;
 		EventManager = new VEventManager();
+		EventListener = new VEventListener();
+
+		CustomHandlersManager.RegisterEventsHandler(EventListener);
 	}
 
 	public override void Disable()
 	{
+		EventManager.StopAllEvents();
+		CustomHandlersManager.UnregisterEventsHandler(EventListener);
+
+		EventListener = null;
 		EventManager = null;
 		Instance = null;
 	}

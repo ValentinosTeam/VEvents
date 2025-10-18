@@ -17,14 +17,8 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		{
 			case State.Starting:
 			case State.SurvivorsReleased:
-				if (Random.value < Settings.ZombieRatio)
-				{
-					utils.SpawnAsZombie(ev.Player);
-				}
-				else
-				{
-					utils.SpawnAsSurvivor(ev.Player);
-				}
+				if (Random.value < Settings.ZombieRatio) utils.SpawnAsZombie(ev.Player);
+				else utils.SpawnAsSurvivor(ev.Player);
 				break;
 			case State.ZombiesReleased:
 				utils.SpawnAsZombie(ev.Player);
@@ -42,7 +36,8 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		{
 			case State.SurvivorsReleased:
 			case State.ZombiesReleased:
-				utils.SpawnAsZombie(ev.Player);
+				if (utils.Zombies.Contains(ev.Attacker)) utils.SpawnAsZombie(ev.Player, false);
+				else utils.SpawnAsZombie(ev.Player, true);
 				if (utils.ZombiesWonEarly()) utils.CurrentState = State.Ended;
 				break;
 			case State.Ended:
@@ -61,6 +56,7 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 			case State.Starting:
 			case State.SurvivorsReleased:
 			case State.ZombiesReleased:
+				utils.RemovePlayer(ev.Player);
 				if (utils.ZombiesWonEarly()) utils.CurrentState = State.Ended;
 				break;
 			case State.PreRound:
@@ -70,7 +66,7 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		}
 	}
 
-	public override void OnScp079Recontaining(Scp079RecontainingEventArgs ev)
+	public override void OnServerCassieQueuingScpTermination(CassieQueuingScpTerminationEventArgs ev)
 	{
 		ev.IsAllowed = false;
 	}

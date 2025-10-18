@@ -8,3 +8,10 @@ internal enum State
 	ZombiesReleased, // Lights out, zombies are now fully active
 	Ended            // Event concluded
 }
+public enum SubEvent
+{
+	None,
+	Cassie,
+	Amnesia,
+	Flicker
+}

@@ -16,19 +16,20 @@ public class CooldownUtils
 	/// <param name="interval">How often to invoke <paramref name="onInterval"/> in seconds.</param>
 	/// <param name="onInterval">Action to run every interval (e.g., update UI or timer).</param>
 	/// <param name="onFinish">Action to run after countdown completes.</param>
-	public static void Start(float duration, float interval, Action<float, int> onInterval, Action onFinish)
+	public static CoroutineHandle Start(float duration, float interval, Action<float, int> onInterval, Action onFinish)
 	{
-		Start(null, duration, interval, 0, onInterval, onFinish);
+		return Start(null, duration, interval, 0, onInterval, onFinish);
 	}
-	public static void Start(string key, float duration, float interval, Action<float, int> onInterval, Action onFinish)
+	public static CoroutineHandle Start(string key, float duration, float interval, Action<float, int> onInterval, Action onFinish)
 	{
-		Start(key, duration, interval, 0, onInterval, onFinish);
+		return Start(key, duration, interval, 0, onInterval, onFinish);
 	}
-	public static void Start(string key, float duration, float interval, float delay, Action<float, int> onInterval, Action onFinish)
+	public static CoroutineHandle Start(string key, float duration, float interval, float delay, Action<float, int> onInterval, Action onFinish)
 	{
 		CoroutineHandle handle = Timing.RunCoroutine(CooldownCoroutine(duration, interval, delay, onInterval, onFinish));
 		if (key is not null) _namedCooldowns.Add(key, handle);
 		else _unnamedCooldowns.Add(handle);
+		return handle;
 	}
 
 	public static void Stop(string key)

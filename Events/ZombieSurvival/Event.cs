@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CustomPlayerEffects;
 using InventorySystem;
 using InventorySystem.Items;
+using InventorySystem.Items.ThrowableProjectiles;
 using LabApi.Events.CustomHandlers;
 using LabApi.Features.Wrappers;
 using MapGeneration;
@@ -24,6 +26,8 @@ public class Event : EventBase<Config>
 	private List<Door> _zombieChamberDoors;
 	private List<Door> _surfaceGates;
 
+	private List<CoroutineHandle> _handles = [];
+
 	private Utils _utils;
 	private Listener _listener;
 
@@ -37,7 +41,7 @@ public class Event : EventBase<Config>
 		CustomHandlersManager.RegisterEventsHandler(_listener);
 		Server.SendBroadcast(Settings.EventStartingMessage, 60);
 
-		Timing.RunCoroutine(EventStartup());
+		_handles.Add(Timing.RunCoroutine(EventStartup()));
 	}
 
 	private IEnumerator<float> EventStartup()
@@ -52,9 +56,10 @@ public class Event : EventBase<Config>
 		GetZombieSpawn();
 		RoundUtils.LockRound();
 		MapUtils.CloseAndLockAllDoors();
+		Map.SetColorOfLights(new Color(0.8f, 0.3f, 0.3f));
 		PlayerUtils.SplitIntoTwoTeams(out _utils.Zombies, out _utils.Survivors, Settings.ZombieRatio);
 		SpawnPlayers();
-		CooldownUtils.Start(
+		_handles.Add(CooldownUtils.Start(
 			duration: Settings.GuideMessageInterval * Settings.ZombieGuideMessages.Count,
 			interval: Settings.GuideMessageInterval,
 			onInterval: (remaining, iteration) =>
@@ -69,21 +74,19 @@ public class Event : EventBase<Config>
 				}
 			},
 			onFinish: ReleaseSurvivors
-		);
+		));
 	}
 	private void GetZombieChamberDoors()
 	{
 		Door door = Door.Get("049_ARMORY");
 		Room room = door?.Rooms.First();
 		_zombieChamberDoors = [];
-		if (room != null)
+		if (room == null) return;
+		foreach (Door d in room.Doors)
 		{
-			foreach (Door d in room.Doors)
+			if ((d.GetType() == typeof(Gate) && Mathf.Abs(d.Position.y - door.Position.y) <= 1) || d == door)
 			{
-				if ((d.GetType() == typeof(Gate) && Mathf.Abs(d.Position.y - door.Position.y) <= 1) || d == door)
-				{
-					_zombieChamberDoors.Add(d);
-				}
+				_zombieChamberDoors.Add(d);
 			}
 		}
 	}
@@ -105,16 +108,16 @@ public class Event : EventBase<Config>
 		Player probe = candidates.First();
 		probe.SetRole(RoleTypeId.Scp049, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 		Logger.Debug("Probe is now Doctor");
-		Timing.CallDelayed(0.2f, () =>
+		_handles.Add(Timing.CallDelayed(0.2f, () =>
 		{
 			_utils.ZombieSpawn = probe.Position;
 			Logger.Debug(_utils.ZombieSpawn);
 			PlayerUtils.PlayersToSpectators();
-		});
+		}));
 	}
 	private void SpawnPlayers()
 	{
-		Timing.CallDelayed(1f, () =>
+		_handles.Add(Timing.CallDelayed(1f, () =>
 		{
 			foreach (Player zombie in _utils.Zombies)
 			{
@@ -124,7 +127,7 @@ public class Event : EventBase<Config>
 			{
 				_utils.SpawnAsSurvivor(survivor);
 			}
-		});
+		}));
 	}
 	private void ReleaseSurvivors()
 	{
@@ -132,7 +135,7 @@ public class Event : EventBase<Config>
 		foreach (Door door in Room.Get(RoomName.LczClassDSpawn).First().Doors) door.IsOpened = true; // Open the Class D spawn doors
 		_utils.CurrentState = State.SurvivorsReleased;
 
-		CooldownUtils.Start(
+		_handles.Add(CooldownUtils.Start(
 			duration: Settings.ZombieReleaseDelay,
 			interval: 1f,
 			onInterval: (remaining, iteration) =>
@@ -140,7 +143,7 @@ public class Event : EventBase<Config>
 				Server.SendBroadcast(Settings.TimeUntilZombiesReleasedMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
 			},
 			onFinish: ReleaseZombies
-		);
+		));
 	}
 	private void ReleaseZombies()
 	{
@@ -149,7 +152,7 @@ public class Event : EventBase<Config>
 		Map.TurnOffLights();
 		MapUtils.OpenDoors(_zombieChamberDoors);
 		_utils.CurrentState = State.ZombiesReleased;
-		CooldownUtils.Start(
+		_handles.Add(CooldownUtils.Start(
 			key: "ZombieSurvivalMainTimer",
 			duration: Settings.EventDuration - broadcastDuration,
 			interval: 1f,
@@ -159,15 +162,74 @@ public class Event : EventBase<Config>
 				Server.SendBroadcast(Settings.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
 			},
 			onFinish: () => _utils.CurrentState = State.Ended
-		);
-		Timing.RunCoroutine(WaitForEventEnd());
+		));
+		_handles.Add(Timing.RunCoroutine(WaitForEventEnd()));
 	}
 
 	private IEnumerator<float> WaitForEventEnd()
 	{
+		CoroutineHandle randomEventsHandle = Timing.RunCoroutine(RandomEventsWhileWaiting());
+		_handles.Add(randomEventsHandle);
 		yield return Timing.WaitUntilTrue(() => _utils.CurrentState == State.Ended);
+		Timing.KillCoroutines(randomEventsHandle);
 		EndEvent();
 	}
+	private IEnumerator<float> RandomEventsWhileWaiting()
+	{
+		while (true)
+		{
+			//TODO: make configurable
+			float delay = Random.Range(Settings.SubEventMinInterval, Settings.SubEventMaxInterval);
+			yield return Timing.WaitForSeconds(delay);
+
+			if (_utils.CurrentState == State.Ended)
+				yield break;
+
+			Logger.Debug("Triggering random sub-event...");
+			TriggerRandomSubEvent();
+		}
+	}
+	private void TriggerRandomSubEvent()
+	{
+		int totalWeight = Settings.SubEventWeights.Values.Sum();
+
+		int roll = Random.Range(0, totalWeight);
+
+		var selectedEvent = SubEvent.None;
+		foreach (var kvp in Settings.SubEventWeights)
+		{
+			roll -= kvp.Value;
+			if (roll < 0)
+			{
+				selectedEvent = kvp.Key;
+				break;
+			}
+		}
+
+		switch (selectedEvent)
+		{
+			case SubEvent.None:
+			default:
+				Logger.Debug("Doing nothing as a random event.");
+				break;
+			case SubEvent.Cassie:
+				int randomCassieMessage = Random.Range(0, 7);
+				Cassie.Clear();
+				Logger.Debug($"Playing glitchy cassie message as a random event. pitch_0.10 .G{randomCassieMessage}");
+				Cassie.Message($"pitch_0.10 .G{randomCassieMessage}", false, false, false);
+				break;
+			case SubEvent.Amnesia:
+				Logger.Debug("Giving amnesia effect to all survivors as a random event.");
+				foreach (Player survivor in _utils.Survivors) survivor.EnableEffect<AmnesiaVision>(1, Random.Range(10f, 30f));
+				break;
+			case SubEvent.Flicker:
+				Logger.Debug("Flickering lights as a random event.");
+				Map.TurnOnLights();
+				_handles.Add(Timing.CallDelayed(1f, Map.TurnOffLights));
+				break;
+		}
+	}
+
 	private void EndEvent()
 	{
 		CooldownUtils.Stop("ZombieSurvivalMainTimer");
@@ -198,20 +260,29 @@ public class Event : EventBase<Config>
 			}
 		}
 
-		CooldownUtils.Start(
+		_handles.Add(CooldownUtils.Start(
 			duration: Settings.EndEventDuration,
 			interval: Settings.EndEventDuration,
 			onInterval: (remaining, iteration) => { },
 			onFinish: Stop
-		);
+		));
 
 	}
 
 	protected override void OnStop()
 	{
 		CooldownUtils.Stop("ZombieSurvivalMainTimer");
+		foreach (CoroutineHandle handle in _handles)
+		{
+			Timing.KillCoroutines(handle);
+		}
+		_handles.Clear();
 		RoundUtils.UnlockRound();
 		PlayerUtils.PlayersToSpectators();
+		Map.ResetColorOfLights();
+		Server.ClearBroadcasts();
+		Cassie.Clear();
+
 		CustomHandlersManager.UnregisterEventsHandler(_listener);
 		_utils = null;
 		_listener = null;
