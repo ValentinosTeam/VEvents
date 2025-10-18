@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using InventorySystem;
 using InventorySystem.Items;
 using LabApi.Features.Wrappers;
@@ -15,13 +17,15 @@ internal class Utils
 	internal List<Player> Zombies;
 	internal Vector3 ZombieSpawn { get; set; }
 	internal State CurrentState { get; set; }
+	private Config Settings { get; set; }
 
-	internal Utils()
+	internal Utils(Config settings)
 	{
 		Survivors = [];
 		Zombies = [];
 		ZombieSpawn = Vector3.zero;
 		CurrentState = State.PreRound;
+		Settings = settings;
 	}
 
 	internal void SpawnAsZombie(Player player)
@@ -30,12 +34,26 @@ internal class Utils
 		if (!Zombies.Contains(player)) Zombies.Add(player);
 		player.SetRole(RoleTypeId.Scp0492, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
 		Logger.Debug($"{player.Nickname} is now a zombie");
-		player.Inventory.ServerAddItem(RandomZombieItem(), ItemAddReason.AdminCommand);
+		GenerateZombieLoot(player);
 		player.Position = ZombieSpawn;
 	}
-	private ItemType RandomZombieItem()
+
+	private void GenerateZombieLoot(Player player)
 	{
-		return ItemType.Ammo9x19;
+		if (Settings.ZombieDrops == null || Settings.ZombieDrops.Count == 0)
+			return;
+		int randomIndex = UnityEngine.Random.Range(0, Settings.ZombieDrops.Count);
+		KeyValuePair<ItemType, int> randomEntry = Settings.ZombieDrops[randomIndex].First();
+		try
+		{
+			ItemType itemType = randomEntry.Key;
+			int amount = randomEntry.Value;
+			for (int i = 0; i < amount; i++) player.AddItem(itemType);
+		}
+		catch (Exception e)
+		{
+			Logger.Error($"Error generating zombie loot - {randomEntry.Key}: {randomEntry.Value}.\n" + e.Message);
+		}
 	}
 
 	internal void SpawnAsSurvivor(Player player)

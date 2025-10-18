@@ -53,4 +53,13 @@ public class Config : Configs.EventConfig
 	public string SurvivorsWinMessage { get; set; } = "Survivors win! {0} survivor(s) remaining: {1}.";
 	[Description("If the zombies win.")]
 	public string ZombiesWinMessage { get; set; } = "Zombies win! All survivors have been converted.";
+
+	[Description("Items and their quantities that zombies will randomly drop upon death. Repeat entries to increase their chances of being selected.")]
+	public List<Dictionary<ItemType, int>> ZombieDrops { get; set; } =
+	[
+		new() { { ItemType.Adrenaline, 1 } },
+		new() { { ItemType.Ammo9x19, 2 } },
+		new() { { ItemType.Ammo9x19, 3 } },
+		new() { { ItemType.Medkit, 1 } }
+	];
 }

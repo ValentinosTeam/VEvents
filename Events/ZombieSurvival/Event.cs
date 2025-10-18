@@ -30,7 +30,7 @@ public class Event : EventBase<Config>
 	protected override void OnStart()
 	{
 		Logger.Debug("Starting event...");
-		_utils = new Utils();
+		_utils = new Utils(Settings);
 		_utils.CurrentState = State.PreRound;
 
 		_listener = new Listener(Settings, _utils);
