@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LabApi.Features.Console;
+using LabApi.Features.Wrappers;
 using VEvents.Core.Interfaces;
 using VEvents.Events;
 using VEvents.Events.ZombieSurvival;
@@ -28,14 +29,12 @@ public class VEventManager
 			response = "Event not found.";
 			return false;
 		}
-		if (manual && !ev.CanStartManually())
+		if (manual && !ev.CanStartManually(out response))
 		{
-			response = "This event cannot be started manually.";
 			return false;
 		}
-		if (!manual && !ev.CanStartAutomatically())
+		if (!manual && !ev.CanStartAutomatically(out response))
 		{
-			response = "This event cannot be started automatically.";
 			return false;
 		}
 		if (ev.IsRunning)

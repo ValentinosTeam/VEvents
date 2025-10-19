@@ -2,6 +2,7 @@
 using LabApi.Events.Arguments.Scp079Events;
 using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.CustomHandlers;
+using PlayerStatsSystem;
 using UnityEngine;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -36,7 +37,7 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		{
 			case State.SurvivorsReleased:
 			case State.ZombiesReleased:
-				if (utils.Zombies.Contains(ev.Attacker)) utils.SpawnAsZombie(ev.Player, false);
+				if (utils.Zombies.Contains(ev.Attacker) && ev.DamageHandler is not ExplosionDamageHandler) utils.SpawnAsZombie(ev.Player, false);
 				else utils.SpawnAsZombie(ev.Player, true);
 				if (utils.ZombiesWonEarly()) utils.CurrentState = State.Ended;
 				break;
@@ -75,4 +76,19 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 	{
 		ev.IsAllowed = false;
 	}
+
+	public override void OnPlayerTriggeringTesla(PlayerTriggeringTeslaEventArgs ev)
+	{
+		if (utils.PowerIs == PowerIs.Off) ev.IsAllowed = false;
+	}
+
+	public override void OnPlayerIdlingTesla(PlayerIdlingTeslaEventArgs ev)
+	{
+		if (utils.PowerIs == PowerIs.Off) ev.IsAllowed = false;
+	}
+
+	// public override void OnPlayerInteractedDoor(PlayerInteractedDoorEventArgs ev)
+	// {
+	// 	Logger.Debug(ev.Door.DoorName + " " + ev.Door.NameTag);
+	// }
 }

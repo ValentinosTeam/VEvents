@@ -73,6 +73,7 @@ public class Config : Configs.EventConfig
 		{SubEvent.None, 10},
 		{SubEvent.Cassie, 5},
 		{SubEvent.Flicker, 4},
-		{SubEvent.Amnesia, 3}
+		{SubEvent.Amnesia, 3},
+		{SubEvent.BackupPower, 2}
 	};
 }

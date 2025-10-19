@@ -13,5 +13,12 @@ public enum SubEvent
 	None,
 	Cassie,
 	Amnesia,
-	Flicker
+	Flicker,
+	BackupPower
+}
+
+internal enum PowerIs
+{
+	On,
+	Off
 }

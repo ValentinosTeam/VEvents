@@ -11,6 +11,6 @@ public interface IEvent
 	public void Stop();
 	public void LoadConfig();
 	public void Validate();
-	public bool CanStartManually();
-	public bool CanStartAutomatically();
+	public bool CanStartManually(out string response);
+	public bool CanStartAutomatically(out string response);
 }

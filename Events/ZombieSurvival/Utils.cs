@@ -18,6 +18,7 @@ internal class Utils
 	internal List<Player> Zombies;
 	internal Vector3 ZombieSpawn { get; set; }
 	internal State CurrentState { get; set; }
+	internal PowerIs PowerIs { get; set; }
 	private Config Settings { get; set; }
 
 	internal Utils(Config settings)
@@ -26,6 +27,7 @@ internal class Utils
 		Zombies = [];
 		ZombieSpawn = Vector3.zero;
 		CurrentState = State.PreRound;
+		PowerIs = PowerIs.Off;
 		Settings = settings;
 	}
 

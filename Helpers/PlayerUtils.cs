@@ -7,7 +7,7 @@ using Logger = LabApi.Features.Console.Logger;
 
 namespace VEvents.Helpers;
 
-public class PlayerUtils
+public static class PlayerUtils
 {
 	public static void PlayersToSpectators(List<Player> exceptions = null)
 	{

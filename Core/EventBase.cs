@@ -13,6 +13,8 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 	public virtual string Name => GetType().Name;
 	public virtual string Description { get; } = "No description provided.";
 	public bool IsRunning { get; private set; } = false;
+	protected TConfig Config { get; private set; } = new();
+
 	public void Start()
 	{
 		if (IsRunning)
@@ -58,17 +60,18 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 	/// Override to add custom start conditions.
 	/// </summary>
 	/// <returns> Returns true if the event has met its conditions to start, false otherwise. </returns>
-	public virtual bool CanStartManually()
+	public virtual bool CanStartManually(out string response)
 	{
+		response = null;
 		return false;
 	}
-	public virtual bool CanStartAutomatically()
+	public virtual bool CanStartAutomatically(out string response)
 	{
+		response = null;
 		return false;
 	}
 
-	protected TConfig Settings { get; private set; } = new();
-	public EventConfig Config => Settings;
+
 	public void LoadConfig()
 	{
 		string fileName = $"event-{Name}-config.yml";
@@ -80,7 +83,7 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 			bool success = VEvents.Instance.TrySaveConfig(cfg, fileName);
 			Logger.Debug($"Creating config was {(success ? "successful" : "unsuccessful")}.");
 		}
-		Settings = cfg;
+		Config = cfg;
 	}
 
 	protected abstract void OnStart();

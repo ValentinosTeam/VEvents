@@ -2,7 +2,7 @@
 
 namespace VEvents.Helpers;
 
-public class RoundUtils
+public static class RoundUtils
 {
 	public static void LockRound()
 	{

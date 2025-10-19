@@ -28,18 +28,18 @@ public class Event : EventBase<Config>
 
 	private List<CoroutineHandle> _handles = [];
 
-	private Utils _utils;
-	private Listener _listener;
+	private Utils Utils { get; set; }
+	private Listener Listener { get; set; }
 
 	protected override void OnStart()
 	{
 		Logger.Debug("Starting event...");
-		_utils = new Utils(Settings);
-		_utils.CurrentState = State.PreRound;
+		Utils = new Utils(Config);
+		Utils.CurrentState = State.PreRound;
 
-		_listener = new Listener(Settings, _utils);
-		CustomHandlersManager.RegisterEventsHandler(_listener);
-		Server.SendBroadcast(Settings.EventStartingMessage, 60);
+		Listener = new Listener(Config, Utils);
+		CustomHandlersManager.RegisterEventsHandler(Listener);
+		Server.SendBroadcast(Config.EventStartingMessage, 60);
 
 		_handles.Add(Timing.RunCoroutine(EventStartup()));
 	}
@@ -50,27 +50,29 @@ public class Event : EventBase<Config>
 		yield return Timing.WaitUntilTrue(() => Round.IsRoundStarted);
 		Server.ClearBroadcasts();
 		Logger.Debug("Round started, starting event...");
-		_utils.CurrentState = State.Starting;
+		Utils.CurrentState = State.Starting;
 		GetZombieChamberDoors();
 		GetSurfaceGates();
 		GetZombieSpawn();
 		RoundUtils.LockRound();
-		MapUtils.CloseAndLockAllDoors();
+		MapUtils.FixAllDoors();
+		MapUtils.CloseAllDoors();
+		MapUtils.LockAllDoors();
 		Map.SetColorOfLights(new Color(0.8f, 0.3f, 0.3f));
-		PlayerUtils.SplitIntoTwoTeams(out _utils.Zombies, out _utils.Survivors, Settings.ZombieRatio);
+		PlayerUtils.SplitIntoTwoTeams(out Utils.Zombies, out Utils.Survivors, Config.ZombieRatio);
 		SpawnPlayers();
 		_handles.Add(CooldownUtils.Start(
-			duration: Settings.GuideMessageInterval * Settings.ZombieGuideMessages.Count,
-			interval: Settings.GuideMessageInterval,
+			duration: Config.GuideMessageInterval * Config.ZombieGuideMessages.Count,
+			interval: Config.GuideMessageInterval,
 			onInterval: (remaining, iteration) =>
 			{
-				foreach (Player zombie in _utils.Zombies)
+				foreach (Player zombie in Utils.Zombies)
 				{
-					Server.SendBroadcast(zombie, Settings.ZombieGuideMessages[iteration], 11, Broadcast.BroadcastFlags.Normal, true);
+					Server.SendBroadcast(zombie, Config.ZombieGuideMessages[iteration], 11, Broadcast.BroadcastFlags.Normal, true);
 				}
-				foreach (Player survivor in _utils.Survivors)
+				foreach (Player survivor in Utils.Survivors)
 				{
-					Server.SendBroadcast(survivor, Settings.SurvivorGuideMessages[iteration], 11, Broadcast.BroadcastFlags.Normal, true);
+					Server.SendBroadcast(survivor, Config.SurvivorGuideMessages[iteration], 11, Broadcast.BroadcastFlags.Normal, true);
 				}
 			},
 			onFinish: ReleaseSurvivors
@@ -110,8 +112,8 @@ public class Event : EventBase<Config>
 		Logger.Debug("Probe is now Doctor");
 		_handles.Add(Timing.CallDelayed(0.2f, () =>
 		{
-			_utils.ZombieSpawn = probe.Position;
-			Logger.Debug(_utils.ZombieSpawn);
+			Utils.ZombieSpawn = probe.Position;
+			Logger.Debug(Utils.ZombieSpawn);
 			PlayerUtils.PlayersToSpectators();
 		}));
 	}
@@ -119,28 +121,29 @@ public class Event : EventBase<Config>
 	{
 		_handles.Add(Timing.CallDelayed(1f, () =>
 		{
-			foreach (Player zombie in _utils.Zombies)
+			foreach (Player zombie in Utils.Zombies)
 			{
-				_utils.SpawnAsZombie(zombie);
+				Utils.SpawnAsZombie(zombie);
+				zombie.MaxHealth = 600f; // The first zombies are slightly stronger
+				zombie.Health = 600f;
 			}
-			foreach (Player survivor in _utils.Survivors)
+			foreach (Player survivor in Utils.Survivors)
 			{
-				_utils.SpawnAsSurvivor(survivor);
+				Utils.SpawnAsSurvivor(survivor);
 			}
 		}));
 	}
 	private void ReleaseSurvivors()
 	{
-		MapUtils.UnlockAllDoors(exceptions: _zombieChamberDoors.Concat(_surfaceGates).ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
+		MapUtils.OpenAllDoors(exceptions: _zombieChamberDoors.Concat(_surfaceGates).ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
 		foreach (Door door in Room.Get(RoomName.LczClassDSpawn).First().Doors) door.IsOpened = true; // Open the Class D spawn doors
-		_utils.CurrentState = State.SurvivorsReleased;
-
+		Utils.CurrentState = State.SurvivorsReleased;
 		_handles.Add(CooldownUtils.Start(
-			duration: Settings.ZombieReleaseDelay,
+			duration: Config.ZombieReleaseDelay,
 			interval: 1f,
 			onInterval: (remaining, iteration) =>
 			{
-				Server.SendBroadcast(Settings.TimeUntilZombiesReleasedMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
+				Server.SendBroadcast(Config.TimeUntilZombiesReleasedMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
 			},
 			onFinish: ReleaseZombies
 		));
@@ -151,17 +154,17 @@ public class Event : EventBase<Config>
 		Server.SendBroadcast($"Zombies are released!", broadcastDuration, Broadcast.BroadcastFlags.Normal, true);
 		Map.TurnOffLights();
 		MapUtils.OpenDoors(_zombieChamberDoors);
-		_utils.CurrentState = State.ZombiesReleased;
+		Utils.CurrentState = State.ZombiesReleased;
 		_handles.Add(CooldownUtils.Start(
 			key: "ZombieSurvivalMainTimer",
-			duration: Settings.EventDuration - broadcastDuration,
+			duration: Config.EventDuration - broadcastDuration,
 			interval: 1f,
 			delay: broadcastDuration,
 			onInterval: (remaining, iteration) =>
 			{
-				Server.SendBroadcast(Settings.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
+				Server.SendBroadcast(Config.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
 			},
-			onFinish: () => _utils.CurrentState = State.Ended
+			onFinish: () => Utils.CurrentState = State.Ended
 		));
 		_handles.Add(Timing.RunCoroutine(WaitForEventEnd()));
 	}
@@ -170,7 +173,7 @@ public class Event : EventBase<Config>
 	{
 		CoroutineHandle randomEventsHandle = Timing.RunCoroutine(RandomEventsWhileWaiting());
 		_handles.Add(randomEventsHandle);
-		yield return Timing.WaitUntilTrue(() => _utils.CurrentState == State.Ended);
+		yield return Timing.WaitUntilTrue(() => Utils.CurrentState == State.Ended);
 		Timing.KillCoroutines(randomEventsHandle);
 		EndEvent();
 	}
@@ -179,10 +182,10 @@ public class Event : EventBase<Config>
 		while (true)
 		{
 			//TODO: make configurable
-			float delay = Random.Range(Settings.SubEventMinInterval, Settings.SubEventMaxInterval);
+			float delay = Random.Range(Config.SubEventMinInterval, Config.SubEventMaxInterval);
 			yield return Timing.WaitForSeconds(delay);
 
-			if (_utils.CurrentState == State.Ended)
+			if (Utils.CurrentState == State.Ended)
 				yield break;
 
 			Logger.Debug("Triggering random sub-event...");
@@ -191,12 +194,12 @@ public class Event : EventBase<Config>
 	}
 	private void TriggerRandomSubEvent()
 	{
-		int totalWeight = Settings.SubEventWeights.Values.Sum();
+		int totalWeight = Config.SubEventWeights.Values.Sum();
 
 		int roll = Random.Range(0, totalWeight);
 
 		var selectedEvent = SubEvent.None;
-		foreach (var kvp in Settings.SubEventWeights)
+		foreach (var kvp in Config.SubEventWeights)
 		{
 			roll -= kvp.Value;
 			if (roll < 0)
@@ -220,12 +223,27 @@ public class Event : EventBase<Config>
 				break;
 			case SubEvent.Amnesia:
 				Logger.Debug("Giving amnesia effect to all survivors as a random event.");
-				foreach (Player survivor in _utils.Survivors) survivor.EnableEffect<AmnesiaVision>(1, Random.Range(10f, 30f));
+				foreach (Player survivor in Utils.Survivors) survivor.EnableEffect<AmnesiaVision>(1, Random.Range(10f, 30f));
 				break;
 			case SubEvent.Flicker:
 				Logger.Debug("Flickering lights as a random event.");
 				Map.TurnOnLights();
 				_handles.Add(Timing.CallDelayed(1f, Map.TurnOffLights));
+				break;
+			case SubEvent.BackupPower:
+				Logger.Debug("Turning on temporary backup power");
+				Map.TurnOnLights();
+				Cassie.Message("turning pitch_0.7 on pitch_1 backup pitch_1.1 jam_001_2 power", false, false, true, "T-T-TURNING ON BACKUP P-POWER.");
+				MapUtils.UnlockAllDoors(exceptions: _zombieChamberDoors.Concat(_surfaceGates).ToList());
+				Utils.PowerIs = PowerIs.On;
+				_handles.Add(Timing.CallDelayed(Random.Range(10f, 30f), () =>
+				{
+					Map.TurnOffLights();
+					Cassie.Message("jam_1_3 backup yield_0.5 pitch_0.8 power yield_0.6 jam_2_2 pitch_0.5 out pitch_0.10 .G5 ", false, false, true, "B-B-BACKUP P O W E R  o...u...t....");
+					MapUtils.OpenAllDoors(exceptions: _zombieChamberDoors.Concat(_surfaceGates).ToList());
+					MapUtils.LockAllDoors(exceptions: _zombieChamberDoors.Concat(_surfaceGates).ToList());
+					Utils.PowerIs = PowerIs.Off;
+				}));
 				break;
 		}
 	}
@@ -234,35 +252,35 @@ public class Event : EventBase<Config>
 	{
 		CooldownUtils.Stop("ZombieSurvivalMainTimer");
 		Map.TurnOnLights();
-		if (!_utils.Survivors.IsEmpty())
+		if (!Utils.Survivors.IsEmpty())
 		{
 			Map.SetColorOfLights(Color.green);
 			var survivorNames = new StringBuilder();
-			PlayerUtils.PlayersToSpectators(_utils.Survivors);
-			foreach (Player survivor in _utils.Survivors.Where(h => h.IsAlive))
+			PlayerUtils.PlayersToSpectators(Utils.Survivors);
+			foreach (Player survivor in Utils.Survivors.Where(h => h.IsAlive))
 			{
 				survivorNames.Append(survivor.Nickname).Append(", ");
 				survivor.SetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 			}
 			survivorNames.Length -= 2;  // Remove last ", "
-			Server.SendBroadcast(Settings.SurvivorsWinMessage
-					.Replace("{0}", _utils.Survivors.Count.ToString())
-					.Replace("{1}", survivorNames.ToString()), (ushort)Settings.EndEventDuration, Broadcast.BroadcastFlags.Normal, true);
+			Server.SendBroadcast(Config.SurvivorsWinMessage
+					.Replace("{0}", Utils.Survivors.Count.ToString())
+					.Replace("{1}", survivorNames.ToString()), (ushort)Config.EndEventDuration, Broadcast.BroadcastFlags.Normal, true);
 		}
 		else
 		{
 			Map.SetColorOfLights(Color.red);
-			Server.SendBroadcast(Settings.ZombiesWinMessage, (ushort)Settings.EndEventDuration, Broadcast.BroadcastFlags.Normal, true);
-			PlayerUtils.PlayersToSpectators(_utils.Zombies);
-			foreach (Player zombie in _utils.Zombies)
+			Server.SendBroadcast(Config.ZombiesWinMessage, (ushort)Config.EndEventDuration, Broadcast.BroadcastFlags.Normal, true);
+			PlayerUtils.PlayersToSpectators(Utils.Zombies);
+			foreach (Player zombie in Utils.Zombies)
 			{
 				zombie.SetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 			}
 		}
 
 		_handles.Add(CooldownUtils.Start(
-			duration: Settings.EndEventDuration,
-			interval: Settings.EndEventDuration,
+			duration: Config.EndEventDuration,
+			interval: Config.EndEventDuration,
 			onInterval: (remaining, iteration) => { },
 			onFinish: Stop
 		));
@@ -277,28 +295,52 @@ public class Event : EventBase<Config>
 			Timing.KillCoroutines(handle);
 		}
 		_handles.Clear();
-		RoundUtils.UnlockRound();
 		PlayerUtils.PlayersToSpectators();
 		Map.ResetColorOfLights();
+		Map.TurnOnLights();
+		MapUtils.FixAllDoors();
+		MapUtils.UnlockAllDoors();
+		MapUtils.CloseAllDoors();
 		Server.ClearBroadcasts();
 		Cassie.Clear();
 
-		CustomHandlersManager.UnregisterEventsHandler(_listener);
-		_utils = null;
-		_listener = null;
+		CustomHandlersManager.UnregisterEventsHandler(Listener);
+		Utils = null;
+		Listener = null;
 		Server.SendBroadcast("Zombie Survival event has ended.", 10);
 	}
 
-	public override bool CanStartManually()
+	public override bool CanStartManually(out string response)
 	{
 		Logger.Debug("Checking if event can be started manually...");
 		//TODO: Make sure no other event is running.
-		if (!Config.IsEnabled) return false;
-		if (!Config.IsManual) return false;
-		if (Round.IsRoundEnded) return false;
-		if (IsRunning) return false;
-		if (Player.List.Count < Settings.MinPlayers) return false;
+		response = null;
+		if (!Config.IsEnabled)
+		{
+			response = "Not enabled";
+			return false;
+		}
+
+		if (!Config.IsManual)
+		{
+			response = "The event can't be started manually";
+			return false;
+		}
+
+		if (Round.IsRoundEnded)
+		{
+			response = "Round has already ended";
+			return false;
+		}
+
+		if (Player.List.Count < Config.MinPlayers)
+		{
+			response = $"Not enough players, min is {Config.MinPlayers}";
+			return false;
+		}
 		Logger.Debug("Event can be started manually.");
+		response = "Starting successfully";
 		return true;
 	}
+
 }

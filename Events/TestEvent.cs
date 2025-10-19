@@ -22,7 +22,7 @@ public class TestEvent : EventBase<TestEventConfig>
 	protected override void OnStart()
 	{
 		Logger.Info("TestEvent started");
-		Cassie.Message(Settings.TestString, true, true, true, "Test");
+		Cassie.Message(Config.TestString, true, true, true, "Test");
 	}
 
 	protected override void OnStop()

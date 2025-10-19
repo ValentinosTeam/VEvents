@@ -4,10 +4,10 @@ using MEC;
 
 namespace VEvents.Helpers;
 
-public class CooldownUtils
+public static class CooldownUtils
 {
-	private static Dictionary<string, CoroutineHandle> _namedCooldowns = new();
-	private static List<CoroutineHandle> _unnamedCooldowns = new();
+	private static readonly Dictionary<string, CoroutineHandle> NamedCooldowns = new();
+	private static readonly List<CoroutineHandle> UnnamedCooldowns = [];
 
 	/// <summary>
 	/// Starts a cooldown coroutine that runs an interval action repeatedly during the countdown, and executes a final action when finished.
@@ -27,22 +27,22 @@ public class CooldownUtils
 	public static CoroutineHandle Start(string key, float duration, float interval, float delay, Action<float, int> onInterval, Action onFinish)
 	{
 		CoroutineHandle handle = Timing.RunCoroutine(CooldownCoroutine(duration, interval, delay, onInterval, onFinish));
-		if (key is not null) _namedCooldowns.Add(key, handle);
-		else _unnamedCooldowns.Add(handle);
+		if (key is not null) NamedCooldowns.Add(key, handle);
+		else UnnamedCooldowns.Add(handle);
 		return handle;
 	}
 
 	public static void Stop(string key)
 	{
-		if (!_namedCooldowns.TryGetValue(key, out CoroutineHandle handle)) return;
+		if (!NamedCooldowns.TryGetValue(key, out CoroutineHandle handle)) return;
 		Timing.KillCoroutines(handle);
-		_namedCooldowns.Remove(key);
+		NamedCooldowns.Remove(key);
 	}
 
 	public static void StopAll()
 	{
-		foreach (var handle in _namedCooldowns) Timing.KillCoroutines(handle.Value);
-		foreach (var handle in _unnamedCooldowns) Timing.KillCoroutines(handle);
+		foreach (var handle in NamedCooldowns) Timing.KillCoroutines(handle.Value);
+		foreach (var handle in UnnamedCooldowns) Timing.KillCoroutines(handle);
 	}
 
 	private static IEnumerator<float> CooldownCoroutine(float duration, float interval, float delay, Action<float, int> onInterval, Action onFinish)
