@@ -58,7 +58,7 @@ public class Event : EventBase<Config>
 		MapUtils.FixAllDoors();
 		MapUtils.CloseAllDoors();
 		MapUtils.LockAllDoors();
-		Map.SetColorOfLights(new Color(0.8f, 0.3f, 0.3f));
+		Map.SetColorOfLights(new Color(0.3f, 0.8f, 0.3f));
 		PlayerUtils.SplitIntoTwoTeams(out Utils.Zombies, out Utils.Survivors, Config.ZombieRatio);
 		SpawnPlayers();
 		_handles.Add(CooldownUtils.Start(

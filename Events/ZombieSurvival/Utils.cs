@@ -75,9 +75,12 @@ internal class Utils
 		if (!Survivors.Contains(player)) Survivors.Add(player);
 		player.SetRole(RoleTypeId.ClassD, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 		Logger.Debug($"{player.Nickname} is now a survivor");
-		player.Inventory.ServerAddItem(ItemType.GunCOM18, ItemAddReason.AdminCommand);
-		player.Inventory.ServerAddItem(ItemType.Lantern, ItemAddReason.AdminCommand);
-		player.Inventory.ServerAddAmmo(ItemType.Ammo9x19, 3);
+		foreach (var item in Settings.SurvivorSpawnItems)
+		{
+			ItemType itemType = item.First().Key;
+			int itemAmount = item.First().Value;
+			for (int i = 0; i < itemAmount; i++) player.Inventory.ServerAddItem(itemType, ItemAddReason.AdminCommand);
+		}
 	}
 
 	internal void RemovePlayer(Player player)

@@ -2,6 +2,9 @@
 
 namespace VEvents.Configs;
 
+/// <summary>
+/// General plugin config that affects all the plugins and how the plugin works.
+/// </summary>
 public class PluginConfig
 {
 	[Description("If true, any enabled automatic events will trigger automatically based on their conditions.")]

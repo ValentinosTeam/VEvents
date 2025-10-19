@@ -4,6 +4,9 @@ using VEvents.Core.Interfaces;
 
 namespace VEvents.Configs;
 
+/// <summary>
+/// Basic Config that All Events share. Inherit this to create your own config.
+/// </summary>
 public class EventConfig
 {
 	[Description("==============================Main Settings==============================\n" +

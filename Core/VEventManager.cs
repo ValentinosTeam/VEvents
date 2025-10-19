@@ -9,6 +9,9 @@ using VEvents.Events.ZombieSurvival;
 
 namespace VEvents.Core;
 
+/// <summary>
+/// This is what starts and stops all the custom events. Commands use this to start events automatically and in the future this class will also start automatic events
+/// </summary>
 public class VEventManager
 {
 	public List<IEvent> Events { get; private set; } = [];

@@ -5,7 +5,7 @@ using LabApi.Features.Wrappers;
 
 namespace VEvents.Helpers;
 
-public class MapUtils
+public static class MapUtils
 {
 
 	public static void FixAllDoors()

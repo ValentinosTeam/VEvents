@@ -13,9 +13,9 @@ public class Config : Configs.EventConfig
 		MinPlayers = 6;
 	}
 
-	[Description("==============================Zombie Survival Settings==============================\n"+
+	[Description("==============================Zombie Survival Settings==============================\n" +
 	             "# The ratio of zombies to total players.")]
-	public float ZombieRatio { get; set; } = 1f/6f;
+	public float ZombieRatio { get; set; } = 1f / 6f;
 
 	[Description("Message shown to all players in the Pre Round state.")]
 	public string EventStartingMessage { get; set; } = "Zombie Survival is starting!";
@@ -27,6 +27,7 @@ public class Config : Configs.EventConfig
 		"You can see in the dark!",
 		"You will be released soon!",
 	];
+
 	public List<string> SurvivorGuideMessages { get; set; } =
 	[
 		"You are a Survivor! Avoid the Zombies!",
@@ -39,20 +40,23 @@ public class Config : Configs.EventConfig
 
 	[Description("The delay in seconds before zombies are released to hunt survivors. Starts after guide messages have been shown.")]
 	public int ZombieReleaseDelay { get; set; } = 120; // 120 = 2 minutes. Time before zombies are released
+
 	[Description("Message shown to all players indicating how much time is left until zombies are released. {0} is replaced with the time in seconds.")]
 	public string TimeUntilZombiesReleasedMessage { get; set; } = "Zombies will be released in {0} seconds!";
 
 	[Description("The duration in seconds of how much time zombies have to find and convert all survivors before the event ends.")]
 	public int EventDuration { get; set; } = 900; // 900 s is 15 minutes
+
 	[Description("Message shown to all players indicating how much time is left until the event ends. {0} is replaced with the time in seconds.")]
 	public string TimeUntilEventEndsMessage { get; set; } = "Event ends in {0} seconds!";
 
 	[Description("The duration in seconds to show the end message before ending the event.")]
 	public int EndEventDuration { get; set; } = 30;
+
 	[Description("If the survivors win, event ending message will show how many survivors {0} are remaining and their names {1}.")]
 	public string SurvivorsWinMessage { get; set; } = "Survivors win! {0} survivor(s) remaining: {1}.";
-	[Description("If the zombies win.")]
-	public string ZombiesWinMessage { get; set; } = "Zombies win! All survivors have been converted.";
+
+	[Description("If the zombies win.")] public string ZombiesWinMessage { get; set; } = "Zombies win! All survivors have been converted.";
 
 	[Description("Items and their quantities that zombies will randomly drop upon death. Repeat entries to increase their chances of being selected.")]
 	public List<Dictionary<ItemType, int>> ZombieDrops { get; set; } =
@@ -63,7 +67,15 @@ public class Config : Configs.EventConfig
 		new() { { ItemType.Medkit, 1 } }
 	];
 
-	[Description("Sub events that can occur during the event to add more chaos. Interval is random between min and max.")]
+	[Description("Item list the survivors will spawn with at the start of the event.")]
+	public List<Dictionary<ItemType, int>> SurvivorSpawnItems { get; set; } =
+	[
+		new() { { ItemType.Ammo9x19, 2 } },
+		new() { { ItemType.GunCOM18, 1 } },
+		new() { { ItemType.Lantern, 1 } }
+	];
+
+[Description("Sub events that can occur during the event to add more chaos. Interval is random between min and max.")]
 	public float SubEventMinInterval { get; set; } = 30f;
 	public float SubEventMaxInterval { get; set; } = 90f;
 

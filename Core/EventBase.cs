@@ -8,6 +8,10 @@ using VEvents.Core.Interfaces;
 
 namespace VEvents.Core;
 
+/// <summary>
+/// Basic Event that handles safe starting and stopping and Loads custom configs.
+/// </summary>
+/// <typeparam name="TConfig"> Create your own config in the event namespace that inherits EventConfig and pass it as a parameter </typeparam>
 public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, new()
 {
 	public virtual string Name => GetType().Name;
