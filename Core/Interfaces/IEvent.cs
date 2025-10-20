@@ -1,6 +1,4 @@
-﻿using VEvents.Configs;
-
-namespace VEvents.Core.Interfaces;
+﻿namespace VEvents.Core.Interfaces;
 
 public interface IEvent
 {

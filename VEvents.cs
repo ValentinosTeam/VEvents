@@ -6,7 +6,6 @@ using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
 using VEvents.Configs;
 using VEvents.Core;
-using VEvents.Events.ZombieSurvival;
 
 namespace VEvents;
 
@@ -48,6 +47,6 @@ public class VEvents : Plugin<PluginConfig>
 	public override string Name { get; } = "VEvents";
 	public override string Description { get; } = "VEvents, short for Valentinos Events, this plugin is a collection of custom events for the SCP:SL game. Some events are automatic, some are manual. Everything is configurable.";
 	public override string Author { get; } = "Alex_Joo";
-	public override Version Version { get; } = new Version(0, 0, 0);
+	public override Version Version { get; } = new Version(1, 0, 0);
 	public override Version RequiredApiVersion { get; } = new Version(LabApiProperties.CompiledVersion);
 }

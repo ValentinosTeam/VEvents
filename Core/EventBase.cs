@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using LabApi.Features.Console;
 using LabApi.Loader;

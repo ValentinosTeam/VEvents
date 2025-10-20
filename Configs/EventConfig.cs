@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
-using VEvents.Core.Interfaces;
+﻿using System.ComponentModel;
 
 namespace VEvents.Configs;
 

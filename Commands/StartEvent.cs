@@ -1,6 +1,5 @@
 ﻿using System;
 using CommandSystem;
-using LabApi.Features.Console;
 
 namespace VEvents.Commands;
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
 

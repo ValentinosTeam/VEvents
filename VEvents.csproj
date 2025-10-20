@@ -70,7 +70,6 @@
         <Compile Include="Core\VEventListener.cs" />
         <Compile Include="Core\VEventManager.cs" />
         <Compile Include="Core\Interfaces\IEvent.cs" />
-        <Compile Include="Events\TestEvent.cs" />
         <Compile Include="Events\ZombieSurvival\Enums.cs" />
         <Compile Include="Events\ZombieSurvival\Config.cs" />
         <Compile Include="Events\ZombieSurvival\Event.cs" />

@@ -1,5 +1,4 @@
 ﻿using LabApi.Events.Arguments.PlayerEvents;
-using LabApi.Events.Arguments.Scp079Events;
 using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.CustomHandlers;
 using PlayerStatsSystem;
@@ -77,6 +76,11 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		ev.IsAllowed = false;
 	}
 
+	public override void OnPlayerActivatingGenerator(PlayerActivatingGeneratorEventArgs ev)
+	{
+		ev.IsAllowed = false;
+	}
+
 	public override void OnPlayerTriggeringTesla(PlayerTriggeringTeslaEventArgs ev)
 	{
 		if (utils.PowerIs == PowerIs.Off) ev.IsAllowed = false;
@@ -87,8 +91,4 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		if (utils.PowerIs == PowerIs.Off) ev.IsAllowed = false;
 	}
 
-	// public override void OnPlayerInteractedDoor(PlayerInteractedDoorEventArgs ev)
-	// {
-	// 	Logger.Debug(ev.Door.DoorName + " " + ev.Door.NameTag);
-	// }
 }

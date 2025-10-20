@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LabApi.Features.Console;
-using LabApi.Features.Wrappers;
 using VEvents.Core.Interfaces;
-using VEvents.Events;
 using VEvents.Events.ZombieSurvival;
 
 namespace VEvents.Core;
@@ -17,7 +15,6 @@ public class VEventManager
 	public List<IEvent> Events { get; private set; } = [];
 	public VEventManager()
 	{
-		AddEvent(new TestEvent());
 		AddEvent(new Event());
 
 		LoadEventConfigs();

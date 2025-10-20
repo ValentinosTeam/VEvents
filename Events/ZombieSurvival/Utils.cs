@@ -5,8 +5,8 @@ using CustomPlayerEffects;
 using InventorySystem;
 using InventorySystem.Items;
 using LabApi.Features.Wrappers;
+using MEC;
 using PlayerRoles;
-using PlayerRoles.PlayableScps.Scp939.Ripples;
 using UnityEngine;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -20,6 +20,7 @@ internal class Utils
 	internal State CurrentState { get; set; }
 	internal PowerIs PowerIs { get; set; }
 	private Config Settings { get; set; }
+	private List<CoroutineHandle> CoroutineHandles { get; set; }
 
 	internal Utils(Config settings)
 	{
@@ -29,6 +30,7 @@ internal class Utils
 		CurrentState = State.PreRound;
 		PowerIs = PowerIs.Off;
 		Settings = settings;
+		CoroutineHandles = new List<CoroutineHandle>();
 	}
 
 	internal void SpawnAsZombie(Player player, bool useZombieSpawn = true)
@@ -36,6 +38,8 @@ internal class Utils
 		if (Survivors.Contains(player)) Survivors.Remove(player);
 		if (!Zombies.Contains(player)) Zombies.Add(player);
 		player.SetRole(RoleTypeId.Scp0492, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
+		player.Health = 300;
+		player.MaxHealth = 300;
 		Logger.Debug($"{player.Nickname} is now a zombie");
 		GenerateZombieLoot(player);
 		if (useZombieSpawn) player.Position = ZombieSpawn;
@@ -75,6 +79,8 @@ internal class Utils
 		if (!Survivors.Contains(player)) Survivors.Add(player);
 		player.SetRole(RoleTypeId.ClassD, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 		Logger.Debug($"{player.Nickname} is now a survivor");
+		player.Health = 160;
+		player.MaxHealth = 160;
 		foreach (var item in Settings.SurvivorSpawnItems)
 		{
 			ItemType itemType = item.First().Key;
@@ -92,5 +98,16 @@ internal class Utils
 	internal bool ZombiesWonEarly()
 	{
 		return (Survivors.Count == 0);
+	}
+
+	internal void AddHandler(CoroutineHandle handle)
+	{
+		CoroutineHandles.Add(handle);
+	}
+
+	internal void KillHandlers()
+	{
+		foreach (CoroutineHandle handle in CoroutineHandles) Timing.KillCoroutines(handle);
+		CoroutineHandles.Clear();
 	}
 }
