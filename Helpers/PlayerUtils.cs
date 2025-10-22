@@ -24,20 +24,17 @@ public static class PlayerUtils
 	{
 		team1 = [];
 		team2 = [];
-		List<Player> players = Player.List
-			.Where(p => p.Role != PlayerRoles.RoleTypeId.Overwatch && !p.IsHost)
-			.ToList();
-		players = players.OrderBy(_ => Random.value).ToList();
-		int i = 0;
-		foreach (Player player in players)
-		{
-			Logger.Debug($"Player {i}: {player.Nickname} ({player.UserId})");
-			i++;
-		}
+		var players = Player.ReadyList.ToList();
+		players = players.Where(p => p.Role != PlayerRoles.RoleTypeId.Overwatch && !p.IsHost).OrderBy(_ => Random.value).ToList();
 		int totalPlayers = players.Count;
 		int team1Count = Mathf.Clamp(Mathf.CeilToInt(totalPlayers * ratio), 1, totalPlayers - 1);
-		Logger.Debug($"team1Count: {team1Count} / {totalPlayers} players. team2Count: {totalPlayers - team1Count} / {totalPlayers} players.");
 		team1 = players.Take(team1Count).ToList();
 		team2 = players.Skip(team1Count).ToList();
+
+		int i = 0;
+		foreach (Player player in team1) Logger.Debug($"Player {i}: {player.Nickname} ({player.UserId}) is on team1");
+		i = 0;
+		foreach (Player player in team2) Logger.Debug($"Player {i}: {player.Nickname} ({player.UserId}) is on team2");
+		Logger.Debug($"team1Count: {team1.Count} / {players.Count} players. team2Count: {team2.Count} / {players.Count} players.");
 	}
 }

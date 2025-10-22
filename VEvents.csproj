@@ -34,6 +34,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="0Harmony">
+          <HintPath>$(SL_REFERENCES)\0Harmony.dll</HintPath>
+        </Reference>
         <Reference Include="Assembly-CSharp">
           <HintPath>$(SL_REFERENCES)\Assembly-CSharp.dll</HintPath>
         </Reference>
@@ -75,6 +78,7 @@
         <Compile Include="Events\ZombieSurvival\Event.cs" />
         <Compile Include="Events\ZombieSurvival\Listener.cs" />
         <Compile Include="Events\ZombieSurvival\Utils.cs" />
+        <Compile Include="Extensions\Scp079RecontainerPatch.cs" />
         <Compile Include="Helpers\CooldownUtils.cs" />
         <Compile Include="Helpers\MapUtils.cs" />
         <Compile Include="Helpers\PlayerUtils.cs" />

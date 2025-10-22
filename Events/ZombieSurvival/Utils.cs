@@ -8,7 +8,9 @@ using LabApi.Features.Wrappers;
 using MEC;
 using PlayerRoles;
 using UnityEngine;
+using VEvents.Helpers;
 using Logger = LabApi.Features.Console.Logger;
+using Random = UnityEngine.Random;
 
 namespace VEvents.Events.ZombieSurvival;
 
@@ -21,6 +23,13 @@ internal class Utils
 	internal PowerIs PowerIs { get; set; }
 	private Config Settings { get; set; }
 	private List<CoroutineHandle> CoroutineHandles { get; set; }
+	internal List<Door> ZombieChamberDoors { get; set; }
+
+	internal List<Door> LockedDoors { get; set; } =
+	[
+		Door.Get("GATE_A"),
+		Door.Get("GATE_B")
+	];
 
 	internal Utils(Config settings)
 	{
@@ -109,5 +118,22 @@ internal class Utils
 	{
 		foreach (CoroutineHandle handle in CoroutineHandles) Timing.KillCoroutines(handle);
 		CoroutineHandles.Clear();
+	}
+
+	internal void BackupPowerSubEvent()
+	{
+		Logger.Debug("Turning on temporary backup power");
+		Map.TurnOnLights();
+		Cassie.Message("turning pitch_0.7 on pitch_1 backup pitch_1.1 jam_001_2 power", false, false, true, "T-T-TURNING ON BACKUP P-POWER.");
+		MapUtils.UnlockAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
+		PowerIs = PowerIs.On;
+		AddHandler(Timing.CallDelayed(Random.Range(10f, 30f), () =>
+		{
+			Map.TurnOffLights();
+			Cassie.Message("jam_1_3 backup yield_0.5 pitch_0.8 power yield_0.6 jam_2_2 pitch_0.5 out pitch_0.10 .G5 ", false, false, true, "B-B-BACKUP P O W E R  o...u...t....");
+			MapUtils.OpenAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
+			MapUtils.LockAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
+			PowerIs = PowerIs.Off;
+		}));
 	}
 }

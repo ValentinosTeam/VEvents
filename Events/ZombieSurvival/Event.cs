@@ -20,9 +20,6 @@ public class Event : EventBase<Config>
 	public override string Name { get; } = "ZombieSurvival";
 	public override string Description { get; } = "Event turns off the lights and makes 2 teams, Survivors and Zombies. Zombies have to find Survivors and kill them to convert them to their team. Last Survivor standing at the end of the event wins.";
 
-	private List<Door> _zombieChamberDoors;
-	private List<Door> _lockedDoors;
-
 	private Utils Utils { get; set; }
 	private Listener Listener { get; set; }
 
@@ -30,10 +27,9 @@ public class Event : EventBase<Config>
 	{
 		Logger.Debug("Starting event...");
 		Utils = new Utils(Config);
-		Utils.CurrentState = State.PreRound;
-
 		Listener = new Listener(Config, Utils);
 		CustomHandlersManager.RegisterEventsHandler(Listener);
+		Server.ClearBroadcasts();
 		Server.SendBroadcast(Config.EventStartingMessage, 60);
 
 		Utils.AddHandler(Timing.RunCoroutine(EventStartup()));
@@ -43,11 +39,21 @@ public class Event : EventBase<Config>
 	{
 		// Wait until the round is started
 		yield return Timing.WaitUntilTrue(() => Round.IsRoundStarted);
+		while (true)
+		{
+			List<Player> players = Player.ReadyList.ToList();
+			bool hasDuplicates = players.Count != players.Distinct().Count();
+			Logger.Debug("has duplicates");
+			if (!hasDuplicates)
+				break;
+			yield return Timing.WaitForSeconds(1f); // check again in 1 second
+		}
+		// Logger.Debug("No duplicates, waiting 5 secs");
+		// yield return Timing.WaitForSeconds(5f);
 		Server.ClearBroadcasts();
 		Logger.Debug("Round started, starting event...");
 		Utils.CurrentState = State.Starting;
 		GetZombieChamberDoors();
-		GetForeverLockedDoors();
 		GetZombieSpawn();
 		RoundUtils.LockRound();
 		MapUtils.FixAllDoors();
@@ -88,27 +94,17 @@ public class Event : EventBase<Config>
 	{
 		Door door = Door.Get("049_ARMORY");
 		Room room = door?.Rooms.First();
-		_zombieChamberDoors = [];
+		Utils.ZombieChamberDoors = [];
 		if (room == null) return;
 		foreach (Door d in room.Doors)
 		{
 			if ((d.GetType() == typeof(Gate) && Mathf.Abs(d.Position.y - door.Position.y) <= 1) || d == door)
 			{
-				_zombieChamberDoors.Add(d);
+				Utils.ZombieChamberDoors.Add(d);
 			}
 		}
 	}
-	private void GetForeverLockedDoors()
-	{
-		_lockedDoors =
-		[
-			Door.Get("GATE_A"),
-			Door.Get("GATE_B"),
-			Door.Get("079_FIRST"), // TODO: in the future make a patch that allows listening for overcharge and alter the default behaviour.
-			Door.Get("079_SECOND"),
-			Door.Get("079_ARMORY")
-		];
-	}
+
 	private void GetZombieSpawn()
 	{
 		// This is very dirty, but I have no idea how to properly find a spawnpoint for SCP0492. This spawns a probe player as SCP049, gets its spawnpoint and then changes it to SCP0492.
@@ -128,6 +124,7 @@ public class Event : EventBase<Config>
 	}
 	private void SpawnPlayers()
 	{
+		Logger.Debug("Spawning Players...");
 		Utils.AddHandler(Timing.CallDelayed(1f, () =>
 		{
 			foreach (Player zombie in Utils.Zombies)
@@ -137,16 +134,19 @@ public class Event : EventBase<Config>
 				zombie.Health = 600f;
 				Item item = zombie.AddItem(ItemType.KeycardChaosInsurgency);
 				zombie.CurrentItem = item;
+				Logger.Debug($"Spawned Zombie ${zombie.Nickname}");
 			}
 			foreach (Player survivor in Utils.Survivors)
 			{
 				Utils.SpawnAsSurvivor(survivor);
+				Logger.Debug($"Spawned Survivor ${survivor.Nickname}");
 			}
 		}));
 	}
 	private void ReleaseSurvivors()
 	{
-		MapUtils.OpenAllDoors(exceptions: _zombieChamberDoors.Concat(_lockedDoors).ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
+		Logger.Debug("Releasing Survivors...");
+		MapUtils.OpenAllDoors(exceptions: Utils.ZombieChamberDoors.Concat(Utils.LockedDoors).ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
 		foreach (Door door in Room.Get(RoomName.LczClassDSpawn).First().Doors) door.IsOpened = true; // Open the Class D spawn doors
 		Utils.CurrentState = State.SurvivorsReleased;
 		Utils.AddHandler(Timing.CallDelayed(Config.ZombieReleaseDelay/2, () =>
@@ -199,7 +199,7 @@ public class Event : EventBase<Config>
 	private void ReleaseZombies()
 	{
 		Map.TurnOffLights();
-		MapUtils.OpenDoors(_zombieChamberDoors);
+		MapUtils.OpenDoors(Utils.ZombieChamberDoors);
 		Utils.CurrentState = State.ZombiesReleased;
 		Utils.AddHandler(CooldownUtils.Start(
 			key: "ZombieSurvivalMainTimer",
@@ -213,7 +213,7 @@ public class Event : EventBase<Config>
 			onFinish: () => Utils.CurrentState = State.Ended
 		));
 		Utils.AddHandler(Timing.RunCoroutine(WaitForEventEnd()));
-		foreach (Player zombie in Utils.Zombies) zombie.RemoveItem(ItemType.KeycardChaosInsurgency); // remove snake from their inventory so they dont just play snake all game
+		foreach (Player zombie in Utils.Zombies) zombie.RemoveItem(ItemType.KeycardChaosInsurgency); // remove snake from their inventory, so they don't just play snake all game
 	}
 
 	private IEnumerator<float> WaitForEventEnd()
@@ -278,19 +278,7 @@ public class Event : EventBase<Config>
 				Utils.AddHandler(Timing.CallDelayed(1f, Map.TurnOffLights));
 				break;
 			case SubEvent.BackupPower:
-				Logger.Debug("Turning on temporary backup power");
-				Map.TurnOnLights();
-				Cassie.Message("turning pitch_0.7 on pitch_1 backup pitch_1.1 jam_001_2 power", false, false, true, "T-T-TURNING ON BACKUP P-POWER.");
-				MapUtils.UnlockAllDoors(exceptions: _zombieChamberDoors.Concat(_lockedDoors).ToList());
-				Utils.PowerIs = PowerIs.On;
-				Utils.AddHandler(Timing.CallDelayed(Random.Range(10f, 30f), () =>
-				{
-					Map.TurnOffLights();
-					Cassie.Message("jam_1_3 backup yield_0.5 pitch_0.8 power yield_0.6 jam_2_2 pitch_0.5 out pitch_0.10 .G5 ", false, false, true, "B-B-BACKUP P O W E R  o...u...t....");
-					MapUtils.OpenAllDoors(exceptions: _zombieChamberDoors.Concat(_lockedDoors).ToList());
-					MapUtils.LockAllDoors(exceptions: _zombieChamberDoors.Concat(_lockedDoors).ToList());
-					Utils.PowerIs = PowerIs.Off;
-				}));
+
 				break;
 		}
 	}
@@ -346,6 +334,7 @@ public class Event : EventBase<Config>
 		MapUtils.CloseAllDoors();
 		Server.ClearBroadcasts();
 		Cassie.Clear();
+		RoundUtils.UnlockRound();
 
 		CustomHandlersManager.UnregisterEventsHandler(Listener);
 		Utils = null;

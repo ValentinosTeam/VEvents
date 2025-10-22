@@ -3,6 +3,7 @@ using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.CustomHandlers;
 using PlayerStatsSystem;
 using UnityEngine;
+using VEvents.Extensions;
 using Logger = LabApi.Features.Console.Logger;
 
 namespace VEvents.Events.ZombieSurvival;
@@ -66,17 +67,26 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		}
 	}
 
+	public override void OnPlayerDamagingWindow(PlayerDamagingWindowEventArgs ev)
+	{
+		if (ev.Window == Scp079RecontainerPatch.Scp079Glass)
+		{
+			Logger.Debug("Canceling overcharge trigger...");
+			ev.IsAllowed = false;
+		}
+	}
+
+	public override void OnServerGeneratorActivated(GeneratorActivatedEventArgs ev)
+	{
+		utils.BackupPowerSubEvent();
+	}
+
 	public override void OnServerCassieQueuingScpTermination(CassieQueuingScpTerminationEventArgs ev)
 	{
 		ev.IsAllowed = false;
 	}
 
 	public override void OnServerWaveRespawning(WaveRespawningEventArgs ev)
-	{
-		ev.IsAllowed = false;
-	}
-
-	public override void OnPlayerActivatingGenerator(PlayerActivatingGeneratorEventArgs ev)
 	{
 		ev.IsAllowed = false;
 	}
