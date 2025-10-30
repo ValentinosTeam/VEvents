@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using Interactables.Interobjects;
 using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
+using BreakableDoor = LabApi.Features.Wrappers.BreakableDoor;
 
 namespace VEvents.Helpers;
 
@@ -55,7 +57,6 @@ public static class MapUtils
 			door.IsLocked = true;
 		}
 	}
-
 	public static void UnlockAllDoors(List<Door> exceptions = null)
 	{
 		Logger.Debug("Unlocking all doors...");
@@ -74,4 +75,20 @@ public static class MapUtils
 			door.IsOpened = true;
 		}
 	}
+
+	public static void UnlockAllElevators()
+	{
+		foreach (Elevator elevator in Elevator.List)
+		{
+			elevator.UnlockAllDoors();
+		}
+	}
+	public static void LockElevators(List<Elevator> elevators)
+	{
+		foreach (Elevator elevator in elevators)
+		{
+			elevator.LockAllDoors();
+		}
+	}
+
 }

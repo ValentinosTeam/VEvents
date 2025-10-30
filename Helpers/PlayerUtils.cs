@@ -25,7 +25,7 @@ public static class PlayerUtils
 		team1 = [];
 		team2 = [];
 		var players = Player.ReadyList.ToList();
-		players = players.Where(p => p.Role != PlayerRoles.RoleTypeId.Overwatch && !p.IsHost).OrderBy(_ => Random.value).ToList();
+		players = players.Where(p => p.Role != RoleTypeId.Overwatch && !p.IsHost).Distinct().OrderBy(_ => Random.value).ToList();
 		int totalPlayers = players.Count;
 		int team1Count = Mathf.Clamp(Mathf.CeilToInt(totalPlayers * ratio), 1, totalPlayers - 1);
 		team1 = players.Take(team1Count).ToList();

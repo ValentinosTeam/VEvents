@@ -1,16 +1,15 @@
 ﻿using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.CustomHandlers;
-using PlayerStatsSystem;
 using UnityEngine;
 using VEvents.Extensions;
 using Logger = LabApi.Features.Console.Logger;
 
 namespace VEvents.Events.ZombieSurvival;
 
-internal class Listener(Config settings, Utils utils) : CustomEventsHandler
+internal class Listener(Config config, Utils utils) : CustomEventsHandler
 {
-	private ZombieSurvival.Config Settings { get; set; } = settings;
+	private ZombieSurvival.Config Config { get; set; } = config;
 
 	public override void OnPlayerJoined(PlayerJoinedEventArgs ev)
 	{
@@ -18,7 +17,7 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		{
 			case State.Starting:
 			case State.SurvivorsReleased:
-				if (Random.value < Settings.ZombieRatio) utils.SpawnAsZombie(ev.Player);
+				if (Random.value < Config.ZombieRatio) utils.SpawnAsZombie(ev.Player);
 				else utils.SpawnAsSurvivor(ev.Player);
 				break;
 			case State.ZombiesReleased:
@@ -37,7 +36,7 @@ internal class Listener(Config settings, Utils utils) : CustomEventsHandler
 		{
 			case State.SurvivorsReleased:
 			case State.ZombiesReleased:
-				if (utils.Zombies.Contains(ev.Attacker) && ev.DamageHandler is not ExplosionDamageHandler) utils.SpawnAsZombie(ev.Player, false);
+				if (utils.Zombies.Contains(ev.Attacker) && utils.Survivors.Contains(ev.Player)) utils.SpawnAsZombie(ev.Player, false);
 				else utils.SpawnAsZombie(ev.Player, true);
 				if (utils.ZombiesWonEarly()) utils.CurrentState = State.Ended;
 				break;

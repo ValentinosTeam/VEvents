@@ -11,9 +11,8 @@ internal enum State
 public enum SubEvent
 {
 	None,
-	Cassie,
 	Amnesia,
-	Flicker,
+	Glitch,
 	BackupPower
 }
 

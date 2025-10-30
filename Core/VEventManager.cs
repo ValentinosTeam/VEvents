@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using LabApi.Features.Console;
 using VEvents.Core.Interfaces;
-using VEvents.Events.ZombieSurvival;
 
 namespace VEvents.Core;
 
@@ -15,7 +14,8 @@ public class VEventManager
 	public List<IEvent> Events { get; private set; } = [];
 	public VEventManager()
 	{
-		AddEvent(new Event());
+		AddEvent(new Events.ZombieSurvival.Event());
+		AddEvent(new Events.Test.Event());
 
 		LoadEventConfigs();
 	}
@@ -31,10 +31,12 @@ public class VEventManager
 		}
 		if (manual && !ev.CanStartManually(out response))
 		{
+			response = "Event cannot be started manually.";
 			return false;
 		}
 		if (!manual && !ev.CanStartAutomatically(out response))
 		{
+			response = "Event cannot be started automatically.";
 			return false;
 		}
 		if (ev.IsRunning)
@@ -89,6 +91,7 @@ public class VEventManager
 			Logger.Error($"Failed to validate event {ev.Name}: {ex}");
 			return;
 		}
+		Logger.Debug("Added event: " + ev.Name);
 		Events.Add(ev);
 	}
 }

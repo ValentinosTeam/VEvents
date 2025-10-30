@@ -52,6 +52,9 @@
         <Reference Include="Mirror">
           <HintPath>$(SL_REFERENCES)\Mirror.dll</HintPath>
         </Reference>
+        <Reference Include="RueI">
+          <HintPath>$(SL_REFERENCES)\RueI.dll</HintPath>
+        </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
@@ -73,6 +76,10 @@
         <Compile Include="Core\VEventListener.cs" />
         <Compile Include="Core\VEventManager.cs" />
         <Compile Include="Core\Interfaces\IEvent.cs" />
+        <Compile Include="Events\Test\Config.cs" />
+        <Compile Include="Events\Test\Event.cs" />
+        <Compile Include="Events\Test\Listener.cs" />
+        <Compile Include="Events\Test\Utils.cs" />
         <Compile Include="Events\ZombieSurvival\Enums.cs" />
         <Compile Include="Events\ZombieSurvival\Config.cs" />
         <Compile Include="Events\ZombieSurvival\Event.cs" />
@@ -83,6 +90,7 @@
         <Compile Include="Helpers\MapUtils.cs" />
         <Compile Include="Helpers\PlayerUtils.cs" />
         <Compile Include="Helpers\RoundUtils.cs" />
+        <Compile Include="Helpers\RueiUtils.cs" />
         <Compile Include="VEvents.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>

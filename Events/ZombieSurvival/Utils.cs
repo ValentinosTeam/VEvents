@@ -21,24 +21,18 @@ internal class Utils
 	internal Vector3 ZombieSpawn { get; set; }
 	internal State CurrentState { get; set; }
 	internal PowerIs PowerIs { get; set; }
-	private Config Settings { get; set; }
+	private Config Config { get; set; }
 	private List<CoroutineHandle> CoroutineHandles { get; set; }
 	internal List<Door> ZombieChamberDoors { get; set; }
 
-	internal List<Door> LockedDoors { get; set; } =
-	[
-		Door.Get("GATE_A"),
-		Door.Get("GATE_B")
-	];
-
-	internal Utils(Config settings)
+	internal Utils(Config config)
 	{
 		Survivors = [];
 		Zombies = [];
 		ZombieSpawn = Vector3.zero;
 		CurrentState = State.PreRound;
 		PowerIs = PowerIs.Off;
-		Settings = settings;
+		Config = config;
 		CoroutineHandles = new List<CoroutineHandle>();
 	}
 
@@ -47,8 +41,8 @@ internal class Utils
 		if (Survivors.Contains(player)) Survivors.Remove(player);
 		if (!Zombies.Contains(player)) Zombies.Add(player);
 		player.SetRole(RoleTypeId.Scp0492, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
-		player.Health = 300;
-		player.MaxHealth = 300;
+		player.Health = Config.ZombiesHealth;
+		player.MaxHealth = Config.ZombiesHealth;
 		Logger.Debug($"{player.Nickname} is now a zombie");
 		GenerateZombieLoot(player);
 		if (useZombieSpawn) player.Position = ZombieSpawn;
@@ -66,10 +60,10 @@ internal class Utils
 
 	private void GenerateZombieLoot(Player player)
 	{
-		if (Settings.ZombieDrops == null || Settings.ZombieDrops.Count == 0) return;
+		if (Config.ZombieDrops == null || Config.ZombieDrops.Count == 0) return;
 
-		int randomIndex = UnityEngine.Random.Range(0, Settings.ZombieDrops.Count);
-		KeyValuePair<ItemType, int> randomEntry = Settings.ZombieDrops[randomIndex].First();
+		int randomIndex = Random.Range(0, Config.ZombieDrops.Count);
+		KeyValuePair<ItemType, int> randomEntry = Config.ZombieDrops[randomIndex].First();
 		try
 		{
 			ItemType itemType = randomEntry.Key;
@@ -88,9 +82,9 @@ internal class Utils
 		if (!Survivors.Contains(player)) Survivors.Add(player);
 		player.SetRole(RoleTypeId.ClassD, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
 		Logger.Debug($"{player.Nickname} is now a survivor");
-		player.Health = 160;
-		player.MaxHealth = 160;
-		foreach (var item in Settings.SurvivorSpawnItems)
+		player.Health = Config.SurvivorHealth;
+		player.MaxHealth = Config.SurvivorHealth;
+		foreach (var item in Config.SurvivorSpawnItems)
 		{
 			ItemType itemType = item.First().Key;
 			int itemAmount = item.First().Value;
@@ -125,14 +119,14 @@ internal class Utils
 		Logger.Debug("Turning on temporary backup power");
 		Map.TurnOnLights();
 		Cassie.Message("turning pitch_0.7 on pitch_1 backup pitch_1.1 jam_001_2 power", false, false, true, "T-T-TURNING ON BACKUP P-POWER.");
-		MapUtils.UnlockAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
+		MapUtils.UnlockAllDoors(exceptions: ZombieChamberDoors.ToList());
 		PowerIs = PowerIs.On;
 		AddHandler(Timing.CallDelayed(Random.Range(10f, 30f), () =>
 		{
 			Map.TurnOffLights();
 			Cassie.Message("jam_1_3 backup yield_0.5 pitch_0.8 power yield_0.6 jam_2_2 pitch_0.5 out pitch_0.10 .G5 ", false, false, true, "B-B-BACKUP P O W E R  o...u...t....");
-			MapUtils.OpenAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
-			MapUtils.LockAllDoors(exceptions: ZombieChamberDoors.Concat(LockedDoors).ToList());
+			MapUtils.OpenAllDoors(exceptions: ZombieChamberDoors.ToList());
+			MapUtils.LockAllDoors(exceptions: ZombieChamberDoors.ToList());
 			PowerIs = PowerIs.Off;
 		}));
 	}

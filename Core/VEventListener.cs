@@ -10,8 +10,9 @@ public class VEventListener : CustomEventsHandler
 {
 	private VEventManager EventManager => VEvents.Instance.EventManager;
 
-	public override void OnServerRoundEnded(RoundEndedEventArgs ev)
+	public override void OnServerRoundRestarted()
 	{
 		EventManager.StopAllEvents();
 	}
+
 }

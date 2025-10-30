@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using CustomPlayerEffects;
+using Interactables.Interobjects;
 using LabApi.Events.CustomHandlers;
 using LabApi.Features.Wrappers;
 using MapGeneration;
@@ -29,27 +31,39 @@ public class Event : EventBase<Config>
 		Utils = new Utils(Config);
 		Listener = new Listener(Config, Utils);
 		CustomHandlersManager.RegisterEventsHandler(Listener);
-		Server.ClearBroadcasts();
-		Server.SendBroadcast(Config.EventStartingMessage, 60);
+
 
 		Utils.AddHandler(Timing.RunCoroutine(EventStartup()));
 	}
 
 	private IEnumerator<float> EventStartup()
 	{
-		// Wait until the round is started
+		Server.ClearBroadcasts();
+		Server.SendBroadcast(Config.EventStartingMessage, ushort.MaxValue);
+
 		yield return Timing.WaitUntilTrue(() => Round.IsRoundStarted);
+
 		while (true)
 		{
-			List<Player> players = Player.ReadyList.ToList();
-			bool hasDuplicates = players.Count != players.Distinct().Count();
-			Logger.Debug("has duplicates");
-			if (!hasDuplicates)
+			yield return Timing.WaitForSeconds(1f);
+
+			bool allReady = true;
+			HashSet<Player> seenPlayers = new();
+
+			foreach (var player in Player.List)
+			{
+				if (player.IsHost) continue;
+				if (!seenPlayers.Add(player)) Logger.Warn($"Duplicate player detected: {player.Nickname}");
+				if (player.IsReady) continue;
+				allReady = false;
+				Logger.Warn($"Player {player.Nickname} is not ready yet. Waiting...");
 				break;
-			yield return Timing.WaitForSeconds(1f); // check again in 1 second
+			}
+			if (allReady) break;
 		}
-		// Logger.Debug("No duplicates, waiting 5 secs");
-		// yield return Timing.WaitForSeconds(5f);
+		Logger.Debug("All players ready, waiting 5 secs...");
+		yield return Timing.WaitForSeconds(5f);
+
 		Server.ClearBroadcasts();
 		Logger.Debug("Round started, starting event...");
 		Utils.CurrentState = State.Starting;
@@ -58,6 +72,7 @@ public class Event : EventBase<Config>
 		RoundUtils.LockRound();
 		MapUtils.FixAllDoors();
 		MapUtils.CloseAllDoors();
+		MapUtils.LockElevators(Elevator.GetByGroup(ElevatorGroup.GateA).Concat(Elevator.GetByGroup(ElevatorGroup.GateB)).ToList());
 		MapUtils.LockAllDoors();
 		Map.SetColorOfLights(new Color(0.8f, 0.8f, 0.8f));
 		PlayerUtils.SplitIntoTwoTeams(out Utils.Zombies, out Utils.Survivors, Config.ZombieRatio);
@@ -130,8 +145,8 @@ public class Event : EventBase<Config>
 			foreach (Player zombie in Utils.Zombies)
 			{
 				Utils.SpawnAsZombie(zombie);
-				zombie.MaxHealth = 600f; // The first zombies are slightly stronger
-				zombie.Health = 600f;
+				zombie.MaxHealth = Config.FirstZombiesHealth;
+				zombie.Health = Config.FirstZombiesHealth;
 				Item item = zombie.AddItem(ItemType.KeycardChaosInsurgency);
 				zombie.CurrentItem = item;
 				Logger.Debug($"Spawned Zombie ${zombie.Nickname}");
@@ -146,10 +161,10 @@ public class Event : EventBase<Config>
 	private void ReleaseSurvivors()
 	{
 		Logger.Debug("Releasing Survivors...");
-		MapUtils.OpenAllDoors(exceptions: Utils.ZombieChamberDoors.Concat(Utils.LockedDoors).ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
+		MapUtils.OpenAllDoors(exceptions: Utils.ZombieChamberDoors.ToList()); // Keep the zombies locked in SCP-049 chamber. Hcz049Armory
 		foreach (Door door in Room.Get(RoomName.LczClassDSpawn).First().Doors) door.IsOpened = true; // Open the Class D spawn doors
 		Utils.CurrentState = State.SurvivorsReleased;
-		Utils.AddHandler(Timing.CallDelayed(Config.ZombieReleaseDelay/2, () =>
+		Utils.AddHandler(Timing.CallDelayed(Config.ZombieReleaseDelay/2f, () =>
 		{
 			Map.TurnOffLights();
 			Utils.AddHandler(Timing.CallDelayed(1f, () =>
@@ -206,14 +221,48 @@ public class Event : EventBase<Config>
 			duration: Config.EventDuration,
 			interval: 1f,
 			delay: 0f,
-			onInterval: (remaining, iteration) =>
-			{
-				Server.SendBroadcast(Config.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()), 2, Broadcast.BroadcastFlags.Normal, true);
-			},
+			onInterval: OnMainTimerTick,
 			onFinish: () => Utils.CurrentState = State.Ended
 		));
 		Utils.AddHandler(Timing.RunCoroutine(WaitForEventEnd()));
 		foreach (Player zombie in Utils.Zombies) zombie.RemoveItem(ItemType.KeycardChaosInsurgency); // remove snake from their inventory, so they don't just play snake all game
+	}
+
+	private void OnMainTimerTick(float remaining, int iteration)
+	{
+		Logger.Debug($"{iteration}");
+
+		// TEMP
+		// float survivorStrength = (Utils.Zombies.Count / (float)(Utils.Survivors.Count+Utils.Zombies.Count)) * (remaining / 600);
+		// string message = $"({Utils.Zombies.Count} zombies / {Utils.Survivors.Count+Utils.Zombies.Count} players) * ({remaining} remaining / 600 max) = {survivorStrength*100:0}%";
+		// Server.SendBroadcast(message, 2, Broadcast.BroadcastFlags.Normal, true);
+		//
+		Server.SendBroadcast(Config.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()),  2,  Broadcast.BroadcastFlags.Normal,  true);
+
+		if (iteration % 2 != 0) return; // Apply debuffs only every 2 ticks
+		foreach (Player survivor in Utils.Survivors)
+		{
+			if (survivor.Room == null) continue;
+			int othersNearby = survivor.Room.Players.Count(p => Utils.Survivors.Contains(p));
+			if (othersNearby <= 2) continue;
+
+			ApplyDebuffs(survivor, othersNearby);
+		}
+	}
+
+	private void ApplyDebuffs(Player survivor, int nearbyCount)
+	{
+		string hint = null;
+		foreach (CrowdingEffectConfig effect in Config.CrowdingEffects.OrderBy(e => e.Threshold))
+		{
+			int threshold = effect.Threshold;
+			if (nearbyCount < threshold) break;
+			survivor.ReferenceHub.playerEffectsController.TryGetEffect(effect.Effect, out StatusEffectBase effectBase);
+			survivor.EnableEffect(effectBase, effect.Intensity, 3f);
+			if (!survivor.Nickname.Contains("Dummy")) Logger.Debug($"Survivor {survivor.Nickname} has {nearbyCount} nearby survivors, applying effect {effect.Effect} with intensity {effect.Intensity}");
+			hint = effect.Hint;
+		}
+		if (hint != null) RueiUtils.SendHint(survivor, hint, 3f, "effect_"+survivor.PlayerId, Config.CrowdingEffectHintPosition);
 	}
 
 	private IEnumerator<float> WaitForEventEnd()
@@ -260,25 +309,19 @@ public class Event : EventBase<Config>
 		{
 			case SubEvent.None:
 			default:
-				Logger.Debug("Doing nothing as a random event.");
 				break;
-			case SubEvent.Cassie:
-				int randomCassieMessage = Random.Range(0, 7);
+			case SubEvent.Glitch:
+				int randomCassieMessage = Random.Range(0, 6);
 				Cassie.Clear();
-				Logger.Debug($"Playing glitchy cassie message as a random event. pitch_0.10 .G{randomCassieMessage}");
-				Cassie.Message($"pitch_0.10 .G{randomCassieMessage}", false, false, false);
-				break;
-			case SubEvent.Amnesia:
-				Logger.Debug("Giving amnesia effect to all survivors as a random event.");
-				foreach (Player survivor in Utils.Survivors) survivor.EnableEffect<AmnesiaVision>(1, Random.Range(10f, 30f));
-				break;
-			case SubEvent.Flicker:
-				Logger.Debug("Flickering lights as a random event.");
+				Cassie.Message($".G{randomCassieMessage}", false, false, false);
 				Map.TurnOnLights();
 				Utils.AddHandler(Timing.CallDelayed(1f, Map.TurnOffLights));
 				break;
+			case SubEvent.Amnesia:
+				foreach (Player survivor in Utils.Survivors) survivor.EnableEffect<AmnesiaVision>(1, Random.Range(Config.AmnesiaDurationMin, Config.AmnesiaDurationMax));
+				break;
 			case SubEvent.BackupPower:
-
+				Utils.BackupPowerSubEvent();
 				break;
 		}
 	}
