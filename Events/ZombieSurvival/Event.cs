@@ -72,7 +72,7 @@ public class Event : EventBase<Config>
 		RoundUtils.LockRound();
 		MapUtils.FixAllDoors();
 		MapUtils.CloseAllDoors();
-		MapUtils.LockElevators(Elevator.GetByGroup(ElevatorGroup.GateA).Concat(Elevator.GetByGroup(ElevatorGroup.GateB)).ToList());
+		MapUtils.LockElevators(Elevator.GetByGroup(ElevatorGroup.GateA01).Concat(Elevator.GetByGroup(ElevatorGroup.GateA02)).Concat(Elevator.GetByGroup(ElevatorGroup.GateB)).ToList());
 		MapUtils.LockAllDoors();
 		Map.SetColorOfLights(new Color(0.8f, 0.8f, 0.8f));
 		PlayerUtils.SplitIntoTwoTeams(out Utils.Zombies, out Utils.Survivors, Config.ZombieRatio);

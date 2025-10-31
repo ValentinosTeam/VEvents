@@ -7,7 +7,6 @@ using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
 using VEvents.Configs;
 using VEvents.Core;
-using VEvents.Extensions;
 
 namespace VEvents;
 
