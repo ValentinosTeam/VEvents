@@ -12,7 +12,7 @@ public class VEventListener : CustomEventsHandler
 
 	public override void OnServerRoundRestarted()
 	{
-		EventManager.StopAllEvents();
+		EventManager.StopAllManualEvents();
 	}
 
 }

@@ -33,16 +33,17 @@ public class Event : EventBase<Config>
 		CustomHandlersManager.RegisterEventsHandler(Listener);
 
 
+		Logger.Debug("Starting EventStartup coroutine...");
 		Utils.AddHandler(Timing.RunCoroutine(EventStartup()));
 	}
 
 	private IEnumerator<float> EventStartup()
 	{
 		Server.ClearBroadcasts();
-		Server.SendBroadcast(Config.EventStartingMessage, ushort.MaxValue);
-
+		Server.SendBroadcast(Config.EventStartingMessage, 600);
+		Logger.Debug("Waiting for round to start...");
 		yield return Timing.WaitUntilTrue(() => Round.IsRoundStarted);
-
+		Logger.Debug("Round started, waiting for all players to be ready...");
 		while (true)
 		{
 			yield return Timing.WaitForSeconds(1f);
@@ -63,10 +64,10 @@ public class Event : EventBase<Config>
 		}
 		Logger.Debug("All players ready, waiting 5 secs...");
 		yield return Timing.WaitForSeconds(5f);
+		Logger.Debug("Done waiting, starting event...");
 
-		Server.ClearBroadcasts();
-		Logger.Debug("Round started, starting event...");
 		Utils.CurrentState = State.Starting;
+		Server.ClearBroadcasts();
 		GetZombieChamberDoors();
 		GetZombieSpawn();
 		RoundUtils.LockRound();
@@ -230,13 +231,6 @@ public class Event : EventBase<Config>
 
 	private void OnMainTimerTick(float remaining, int iteration)
 	{
-		Logger.Debug($"{iteration}");
-
-		// TEMP
-		// float survivorStrength = (Utils.Zombies.Count / (float)(Utils.Survivors.Count+Utils.Zombies.Count)) * (remaining / 600);
-		// string message = $"({Utils.Zombies.Count} zombies / {Utils.Survivors.Count+Utils.Zombies.Count} players) * ({remaining} remaining / 600 max) = {survivorStrength*100:0}%";
-		// Server.SendBroadcast(message, 2, Broadcast.BroadcastFlags.Normal, true);
-		//
 		Server.SendBroadcast(Config.TimeUntilEventEndsMessage.Replace("{0}", remaining.ToString()),  2,  Broadcast.BroadcastFlags.Normal,  true);
 
 		if (iteration % 2 != 0) return; // Apply debuffs only every 2 ticks

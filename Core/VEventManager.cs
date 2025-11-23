@@ -15,9 +15,11 @@ public class VEventManager
 	public VEventManager()
 	{
 		AddEvent(new Events.ZombieSurvival.Event());
-		AddEvent(new Events.Test.Event());
+		AddEvent(new Events.AutoFf.Event());
+		// AddEvent(new Events.Test.Event());
 
 		LoadEventConfigs();
+		StartAllAutomaticEvents();
 	}
 
 	public bool StartEvent(string name, out string response, bool manual = false)
@@ -47,13 +49,11 @@ public class VEventManager
 		ev.Start();
 		return true;
 	}
-
-	public void StopAllEvents()
+	public void StopAllManualEvents()
 	{
-		Logger.Debug("Stopping all events...");
-		foreach (IEvent ev in Events.Where(ev => ev.IsRunning)) ev.Stop();
+		Logger.Debug("Stopping all manual events...");
+		foreach (IEvent ev in Events.Where(ev => ev.IsRunning && ev.CanStartManually(out _))) ev.Stop();
 	}
-
 	public bool StopEvent(string name, out string response)
 	{
 		IEvent ev = Events.Find(e => e.Name == name);
@@ -73,6 +73,21 @@ public class VEventManager
 		return true;
 	}
 
+	public List<string> GetRunningEventIds()
+	{
+		return (from ev in Events where ev.IsRunning select ev.Name).ToList();
+	}
+
+	private void StartAllAutomaticEvents()
+	{
+		Logger.Debug("Starting automatic events...");
+		foreach (IEvent ev in Events.Where(ev => ev.CanStartAutomatically(out _)))
+		{
+			Logger.Debug($"Starting {ev.Name}...");
+			ev.Start();
+		}
+		Logger.Debug("Done!");
+	}
 	private void LoadEventConfigs()
 	{
 		foreach (IEvent ev in Events)

@@ -13,9 +13,7 @@ public class EventConfig
 	[Description("Whether the event can be started automatically by the event manager.")]
 	public bool IsAuto { get; set; } = false;
 	[Description("Whether the event can be started manually by an admin.")]
-	public bool IsManual { get; set; } = true;
-	[Description("The weight of the event when being selected for automatic events. Higher weight means higher chance of being selected.")]
-	public int Weight { get; set; } = 1;
+	public bool IsManual { get; set; } = false;
 	[Description("The minimum number of players required to start the event.")]
 	public int MinPlayers { get; set; } = 0;
 

@@ -76,6 +76,9 @@
         <Compile Include="Core\VEventListener.cs" />
         <Compile Include="Core\VEventManager.cs" />
         <Compile Include="Core\Interfaces\IEvent.cs" />
+        <Compile Include="Events\AutoFF\Config.cs" />
+        <Compile Include="Events\AutoFF\Event.cs" />
+        <Compile Include="Events\AutoFF\Listener.cs" />
         <Compile Include="Events\Test\Config.cs" />
         <Compile Include="Events\Test\Event.cs" />
         <Compile Include="Events\Test\Listener.cs" />

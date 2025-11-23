@@ -24,15 +24,15 @@ public class VEvents : Plugin<PluginConfig>
 		_harmony = new Harmony("gg.valentinos.vevents");
 		_harmony.PatchAll();
 		Instance = this;
-		EventManager = new VEventManager();
-		EventListener = new VEventListener();
+		EventManager = new();
+		EventListener = new();
 
 		CustomHandlersManager.RegisterEventsHandler(EventListener);
 	}
 
 	public override void Disable()
 	{
-		EventManager.StopAllEvents();
+		EventManager.StopAllManualEvents();
 		CustomHandlersManager.UnregisterEventsHandler(EventListener);
 		_harmony.UnpatchAll(_harmony.Id);
 		EventListener = null;
@@ -50,6 +50,6 @@ public class VEvents : Plugin<PluginConfig>
 	public override string Name { get; } = "VEvents";
 	public override string Description { get; } = "VEvents, short for Valentinos Events, this plugin is a collection of custom events for the SCP:SL game. Some events are automatic, some are manual. Everything is configurable.";
 	public override string Author { get; } = "Alex_Joo";
-	public override Version Version { get; } = new Version(1, 0, 2);
+	public override Version Version { get; } = new Version(1, 0, 3);
 	public override Version RequiredApiVersion { get; } = new Version(LabApiProperties.CompiledVersion);
 }

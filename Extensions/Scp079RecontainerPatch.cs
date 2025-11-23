@@ -15,7 +15,6 @@ public class Scp079RecontainerPatch : CustomEventsHandler
 
 	public static void Prefix(Scp079Recontainer __instance)
 	{
-		Logger.Debug("Started getting the glass");
 		FieldInfo field = AccessTools.Field(typeof(Scp079Recontainer), "_activatorGlass");
 		Scp079Glass = (BreakableWindow)field.GetValue(__instance);
 	}

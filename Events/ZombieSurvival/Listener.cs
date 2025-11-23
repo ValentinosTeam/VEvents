@@ -11,6 +11,11 @@ internal class Listener(Config config, Utils utils) : CustomEventsHandler
 {
 	private ZombieSurvival.Config Config { get; set; } = config;
 
+	public override void OnServerRoundStarted()
+	{
+		Logger.Debug("EventListener: Round started!");
+	}
+
 	public override void OnPlayerJoined(PlayerJoinedEventArgs ev)
 	{
 		switch (utils.CurrentState)
@@ -100,4 +105,8 @@ internal class Listener(Config config, Utils utils) : CustomEventsHandler
 		if (utils.PowerIs == PowerIs.Off) ev.IsAllowed = false;
 	}
 
+	public override void OnPlayerChangingRole(PlayerChangingRoleEventArgs ev)
+	{
+		if (utils.CurrentState == State.PreRound) ev.IsAllowed = false;
+	}
 }

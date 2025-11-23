@@ -12,4 +12,15 @@ public static class RoundUtils
 	{
 		Round.IsLocked = false;
 	}
+
+	public static void TurnFFOn()
+	{
+		Server.FriendlyFire = true;
+	}
+
+	public static void TurnFFOff()
+	{
+		Server.FriendlyFire = false;
+	}
+
 }

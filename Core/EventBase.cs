@@ -66,12 +66,12 @@ public abstract class EventBase<TConfig> : IEvent where TConfig : EventConfig, n
 	public virtual bool CanStartManually(out string response)
 	{
 		response = null;
-		return false;
+		return Config.IsManual;
 	}
 	public virtual bool CanStartAutomatically(out string response)
 	{
 		response = null;
-		return false;
+		return Config.IsAuto;
 	}
 
 
